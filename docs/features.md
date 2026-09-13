@@ -54,5 +54,5 @@ This is a UI track. It does not change Pi, the Paseo daemon, provider requests, 
 serialization, or message delivery. Public examples are synthetic and contain no private
 conversation, workspace path, credential, update configuration, or signing material.
 
-See [rendered examples](examples.md). The public repository contains the UI source; the full
-private Pi/daemon customization and its signed installer remain separate.
+See [rendered examples](examples.md). The public repository provides UI source and a signed macOS arm64 build.
+The full private Pi/daemon customization remains a separate build. See [change records](changes.md).

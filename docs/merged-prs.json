@@ -1,0 +1,289 @@
+[
+  {
+    "project": "paseo",
+    "number": 4113,
+    "title": "fix(server): forward steerActiveTurn through wrapSessionProvider",
+    "url": "https://github.com/getpaseo/paseo/pull/4113",
+    "reviewedHead": "75c309ce6b810843b048086ee6e965801e237934",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-09; git apply",
+    "integrationAtPaseo080": "retained local patch"
+  },
+  {
+    "project": "paseo",
+    "number": 4429,
+    "title": "fix(desktop): keep an externally managed daemon running across app updates",
+    "url": "https://github.com/getpaseo/paseo/pull/4429",
+    "reviewedHead": "682af58ac505e89c6c38db57e1c0f2fdfee7a45c",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-09; git apply",
+    "integrationAtPaseo080": "retained local patch"
+  },
+  {
+    "project": "paseo",
+    "number": 3124,
+    "title": "Honor Pi model thinking levels",
+    "url": "https://github.com/getpaseo/paseo/pull/3124",
+    "reviewedHead": "efb96b3040fe34d64df32d1eab2e847ef98e9422",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-09; git apply",
+    "integrationAtPaseo080": "retained local patch"
+  },
+  {
+    "project": "paseo",
+    "number": 3381,
+    "title": "fix(app): bound the queued-message list and scroll the overflow",
+    "url": "https://github.com/getpaseo/paseo/pull/3381",
+    "reviewedHead": "761963e7cfb7d5c1138439666ed0bf55f0a2a5d4",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-09; git apply",
+    "integrationAtPaseo080": "retained local patch"
+  },
+  {
+    "project": "paseo",
+    "number": 4543,
+    "title": "Fix macOS Command-arrow terminal navigation with Electron regression coverage",
+    "url": "https://github.com/getpaseo/paseo/pull/4543",
+    "reviewedHead": "af152588319d63c2764e8c57a747a0e011b1e0c2",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-09; git apply",
+    "integrationAtPaseo080": "retained local patch"
+  },
+  {
+    "project": "paseo",
+    "number": 4472,
+    "title": "fix(app): open OSC 8 terminal hyperlinks with the external opener",
+    "url": "https://github.com/getpaseo/paseo/pull/4472",
+    "reviewedHead": "a8a8b9f8d2cd794ef16e0e44f35be53bab0769ea",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-09; git apply",
+    "integrationAtPaseo080": "retained local patch"
+  },
+  {
+    "project": "pi",
+    "number": 8612,
+    "title": "fix(coding-agent): clear delivered image-only queue entries",
+    "url": "https://github.com/earendil-works/pi/pull/8612",
+    "reviewedHead": "b67b3db2abef6df6b3541b4ac54cd3c145cd5d42",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-09; ported to SDK JS and executable bundle",
+    "integrationAtPaseo080": "installed Pi 0.85.1 unchanged"
+  },
+  {
+    "project": "pi",
+    "number": 9179,
+    "title": "fix(coding-agent): reject tree navigation during compaction",
+    "url": "https://github.com/earendil-works/pi/pull/9179",
+    "reviewedHead": "37d6056c7cee3646bbdc21fdca14d37992da15f3",
+    "stateAtReview": "closed",
+    "upstreamMergedAt": "2026-09-07T08:32:11Z",
+    "localIntegration": "2026-09-09; ported to SDK JS and executable bundle",
+    "integrationAtPaseo080": "installed Pi 0.85.1 unchanged"
+  },
+  {
+    "project": "paseo",
+    "number": 4436,
+    "title": "Revert #4421 and narrow the cache restore fix (#4436)",
+    "url": "https://github.com/getpaseo/paseo/pull/4436",
+    "upstreamCommit": "c46aee4e6a2b8b077bd8a0074b468d48eccdcb59",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 3849,
+    "title": "fix(pi): settle autonomous Pi turns triggered by extensions (#3849)",
+    "url": "https://github.com/getpaseo/paseo/pull/3849",
+    "upstreamCommit": "c424f82922fcd36aa9cc9e473644bca04417b420",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 4389,
+    "title": "fix(desktop): preserve the packaged macOS Dock icon (#4389)",
+    "url": "https://github.com/getpaseo/paseo/pull/4389",
+    "upstreamCommit": "e4cd2d1ad08a452e75c3ea316cf4c41d15fe8f60",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 4160,
+    "title": "Restore live sessions immediately after app resume (#4160)",
+    "url": "https://github.com/getpaseo/paseo/pull/4160",
+    "upstreamCommit": "efd6023b90b898963804c6fdb36134402c55590b",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 4321,
+    "title": "Preserve nested subagent ownership (#4321)",
+    "url": "https://github.com/getpaseo/paseo/pull/4321",
+    "upstreamCommit": "f4b209be4d81d25a6143d12d374d797d485e8faa",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 4332,
+    "title": "fix(providers): preserve state across configuration reloads (#4332)",
+    "url": "https://github.com/getpaseo/paseo/pull/4332",
+    "upstreamCommit": "c6106762036e69c0b91005e30673fe5a44a52f30",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 4322,
+    "title": "Restore reliable macOS desktop updates (#4322)",
+    "url": "https://github.com/getpaseo/paseo/pull/4322",
+    "upstreamCommit": "9e90b86afa60aeeef05c145653f13cd2eed93896",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 4208,
+    "title": "fix(server): disable repository fsmonitor commands (#4208)",
+    "url": "https://github.com/getpaseo/paseo/pull/4208",
+    "upstreamCommit": "708f9260b133c7a7cafceae0a48e6fb02d7597e9",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 4201,
+    "title": "fix(release): keep releases draft until manifests are ready (#4201)",
+    "url": "https://github.com/getpaseo/paseo/pull/4201",
+    "upstreamCommit": "d67a6f5f6cdcf1f5559ee769715caa3d45b1af14",
+    "localIntegration": "Included in official v0.8.0 baseline; not a separate cherry-pick"
+  },
+  {
+    "project": "paseo",
+    "number": 3075,
+    "title": "fix(server): hidden Pi extension context silently ends the turn",
+    "url": "https://github.com/getpaseo/paseo/pull/3075",
+    "reviewedHead": "6949bb45cc6615ff976b5ed671e6798d09fbd184",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 3094,
+    "title": "fix(server): notify the caller when a detached child finishes",
+    "url": "https://github.com/getpaseo/paseo/pull/3094",
+    "reviewedHead": "f756295a60a5d3b13a1fff86ab3029d865ad8263",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 4263,
+    "title": "fix(server): keep system errors separate from replies",
+    "url": "https://github.com/getpaseo/paseo/pull/4263",
+    "reviewedHead": "3e977b5e7b7081c67313212074f1f5b533dade5c",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 4256,
+    "title": "fix(app): replace painted timeline rows on cursorless tail pages",
+    "url": "https://github.com/getpaseo/paseo/pull/4256",
+    "reviewedHead": "2661f94438afbf4f282019c7345e9bcd381511f5",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 4682,
+    "title": "fix: keep the last visible pane when its final tab closes",
+    "url": "https://github.com/getpaseo/paseo/pull/4682",
+    "reviewedHead": "0e9f74a676d3c21f4b057ce61822774d98473315",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 4646,
+    "title": "fix(desktop): throttle hidden browsers between screenshots",
+    "url": "https://github.com/getpaseo/paseo/pull/4646",
+    "reviewedHead": "97c473797b6062ba4a198314853b423235a62c9b",
+    "stateAtReview": "MERGED",
+    "upstreamMergedAt": "2026-09-11T06:05:46Z",
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 4101,
+    "title": "fix(terminal): preserve CJK spacing across retained restores",
+    "url": "https://github.com/getpaseo/paseo/pull/4101",
+    "reviewedHead": "0d27ddd37a8ab0a6b2a367f73ccb49cb6c1fa1a3",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 3954,
+    "title": "Capture mouse states so that changing tab focus will reinstate mouse capture",
+    "url": "https://github.com/getpaseo/paseo/pull/3954",
+    "reviewedHead": "268b02f8b1efcba071003c775b80693a4ffe8d67",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 4226,
+    "title": "Fix Enter submission in narrow desktop panes",
+    "url": "https://github.com/getpaseo/paseo/pull/4226",
+    "reviewedHead": "387f0f621b2cfb541acfc8ee61d408ae40f9e105",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "paseo",
+    "number": 2204,
+    "title": "fix: prevent file mention autocomplete from triggering on emails",
+    "url": "https://github.com/getpaseo/paseo/pull/2204",
+    "reviewedHead": "5bae4da321ec67a282986c60eb951b9097dc9992",
+    "stateAtReview": "OPEN",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; frozen PR delta applied"
+  },
+  {
+    "project": "pi",
+    "number": 8283,
+    "title": "fix(coding-agent): restore continuation after retry and compaction",
+    "url": "https://github.com/earendil-works/pi/pull/8283",
+    "reviewedHead": "14f4c635e6a6c7dcd40e3e552cc51a4dab61ba42",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; minimal runtime/SDK/bundle port preserving local compaction policy"
+  },
+  {
+    "project": "pi",
+    "number": 9126,
+    "title": "fix(coding-agent): settle tool results before disposal",
+    "url": "https://github.com/earendil-works/pi/pull/9126",
+    "reviewedHead": "fc9fc580944355ac5b28af95261446d46bdebcae",
+    "stateAtReview": "open",
+    "upstreamMergedAt": null,
+    "localIntegration": "2026-09-11 custom.2; minimal runtime/SDK/bundle port preserving local compaction policy"
+  },
+  {
+    "project": "pi",
+    "title": "Use two-stack FIFO for EventStream",
+    "url": "https://github.com/earendil-works/pi/commit/b2602be77cb7b0de45dd616407fd210daa48aa75",
+    "upstreamCommit": "b2602be77cb7b0de45dd616407fd210daa48aa75",
+    "localIntegration": "2026-09-11 custom.2; SDK, shared bundle and Bedrock bundle synchronized"
+  }
+]

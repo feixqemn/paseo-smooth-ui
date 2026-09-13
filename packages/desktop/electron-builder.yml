@@ -1,4 +1,5 @@
 npmRebuild: false
+forceCodeSigning: true
 appId: sh.paseo.desktop
 productName: Paseo
 executableName: Paseo
@@ -27,21 +28,29 @@ asarUnpack:
   - dist/daemon/node-entrypoint-runner.js
   - node_modules/@getpaseo/server/dist/server/terminal/shell-integration/**/*
 extraResources:
+  - from: ../../docs/changes.md
+    to: BUILD-CHANGES.md
+  - from: ../../docs/merged-prs.json
+    to: merged-prs.json
   - from: ../app/dist
     to: app-dist
   - from: assets/editor-targets
     to: editor-target-icons
 publish:
   provider: github
-  owner: getpaseo
-  repo: paseo
+  owner: feixqemn
+  repo: paseo-smooth-ui
+  channel: latest
 mac:
+  identity: "85757D14BD46D3EA33DF9EAC9A87598444D55A94"
+  timestamp: none
+  preAutoEntitlements: false
   artifactName: "Paseo-${version}-${arch}.${ext}"
   minimumSystemVersion: "13.0.0"
   category: public.app-category.developer-tools
   icon: assets/icon.icns
   hardenedRuntime: true
-  notarize: true
+  notarize: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.inherit.plist
   extraResources:

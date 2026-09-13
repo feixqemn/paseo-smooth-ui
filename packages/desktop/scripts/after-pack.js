@@ -111,6 +111,9 @@ function fmtMB(bytes) {
 
 exports.default = async function afterPack(context) {
   const platform = context.electronPlatformName;
+  if (platform === "darwin") {
+    require("./sign-local.js").unlockLocalSigningIdentity();
+  }
   const arch = ARCH_MAP[context.arch] || process.arch;
 
   pruneNativeModules(context.appOutDir, platform, arch);

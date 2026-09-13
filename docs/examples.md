@@ -11,6 +11,13 @@ keep the Markdown source.
 
 ![Sent Markdown message](images/markdown-message.png)
 
+## Activity → tools → thinking details
+
+Three actual UI states, held for readability: collapsed activity, tool/thinking rows, then provider
+reasoning details. This step-through GIF illustrates the interaction, not animation timing.
+
+![Activity and thinking details walkthrough](images/activity-walkthrough.gif)
+
 ## Reasoning and adjacent tools
 
 Reasoning and adjacent tools collapse into a single summary. Expand it to see the Markdown
@@ -46,6 +53,8 @@ normal click follows Layout, Command/Ctrl locates it in the file manager, and Op
 with the system default application. The mappings are configurable in Settings → Layout.
 
 ## Chinese emphasis
+
+![Chinese Markdown, including punctuation-adjacent emphasis](images/chinese-markdown.jpg)
 
 These also render as bold in sent messages and assistant replies:
 
