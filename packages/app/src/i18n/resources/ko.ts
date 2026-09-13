@@ -6,6 +6,8 @@ export const ko: TranslationResources = {
     back: "뒤로",
     loading: "불러오는 중...",
     actions: {
+      showMore: "더 보기",
+      showLess: "접기",
       back: "뒤로",
       cancel: "취소",
       close: "닫기",

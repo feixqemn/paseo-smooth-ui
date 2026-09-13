@@ -6,6 +6,8 @@ export const ar: TranslationResources = {
     back: "خلف",
     loading: "تحميل...",
     actions: {
+      showMore: "عرض المزيد",
+      showLess: "عرض أقل",
       back: "خلف",
       cancel: "يلغي",
       close: "يغلق",

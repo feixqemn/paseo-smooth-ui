@@ -6,6 +6,8 @@ export const zhCN: TranslationResources = {
     back: "返回",
     loading: "加载中...",
     actions: {
+      showMore: "展开显示",
+      showLess: "收起",
       back: "返回",
       cancel: "取消",
       close: "关闭",

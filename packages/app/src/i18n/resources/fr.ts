@@ -6,6 +6,8 @@ export const fr: TranslationResources = {
     back: "Dos",
     loading: "Chargement...",
     actions: {
+      showMore: "Afficher plus",
+      showLess: "Réduire",
       back: "Dos",
       cancel: "Annuler",
       close: "Fermer",

@@ -6,6 +6,8 @@ export const ptBR: TranslationResources = {
     back: "Voltar",
     loading: "Carregando...",
     actions: {
+      showMore: "Mostrar mais",
+      showLess: "Mostrar menos",
       back: "Voltar",
       cancel: "Cancelar",
       close: "Fechar",

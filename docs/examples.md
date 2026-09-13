@@ -11,22 +11,16 @@ keep the Markdown source.
 
 ![Sent Markdown message](images/markdown-message.png)
 
-## Activity → tools → thinking details
-
-Three actual UI states, held for readability: collapsed activity, tool/thinking rows, then provider
-reasoning details. This step-through GIF illustrates the interaction, not animation timing.
-
-![Activity and thinking details walkthrough](images/activity-walkthrough.gif)
-
 ## Reasoning and adjacent tools
 
-Reasoning and adjacent tools collapse into a single summary. Expand it to see the Markdown
-reasoning rows and individual tool calls in chronological order; normal replies stay outside.
-Reasoning has a cloud icon and the same spacing as tools. Click its row to read the provider details.
+Consecutive reasoning and tool calls share an activity summary. Expanding it shows each tool call
+and the full original provider thinking text, with a cloud icon and matching typography.
+There is no derived title or duplicate detail panel.
 
-![Collapsed activity summary](images/activity-collapsed.png)
+## Long messages
 
-![Expanded activity with reasoning and tools](images/reasoning-tools.png)
+Messages over 480px offer Show more / Show less; wide Markdown stays within the conversation.
+Streaming replies and thinking remain visible. Sending and copying preserve the full source.
 
 ## Try it
 
@@ -64,3 +58,5 @@ These also render as bold in sent messages and assistant replies:
 ```
 
 The source and code spans remain unchanged when copied.
+
+Chinese curly quotes now also preserve bold: `我希望把**“界面清晰”变成“阅读轻松”**。`

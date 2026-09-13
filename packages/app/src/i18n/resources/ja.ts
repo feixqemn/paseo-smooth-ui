@@ -6,6 +6,8 @@ export const ja: TranslationResources = {
     back: "戻る",
     loading: "読み込み中...",
     actions: {
+      showMore: "もっと見る",
+      showLess: "折りたたむ",
       back: "戻る",
       cancel: "キャンセル",
       close: "閉じる",

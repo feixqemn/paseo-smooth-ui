@@ -7,15 +7,15 @@ are frozen at the original review date, not a claim about today's upstream state
 
 | Track | Version | Base | Included changes |
 | --- | --- | --- | --- |
-| Public Smooth UI | `0.8.0-smooth.20260912.1` | Official Paseo `v0.8.0` | All UI changes below; stock 0.8.0 daemon behavior |
-| Private customization | `0.8.0-custom.20260912.2` | Official Paseo `v0.8.0` + custom Pi `0.85.1` | Same UI changes, plus the private runtime changes and integrations below |
+| Public Smooth UI | `0.8.0-smooth.20260912.2` | Official Paseo `v0.8.0` | All UI changes below; stock 0.8.0 daemon behavior |
+| Private customization | `0.8.0-custom.20260912.3` | Official Paseo `v0.8.0` + custom Pi `0.85.1` | Same UI changes, plus the private runtime changes and integrations below |
 
 Official Paseo base: `b8e24677e12b226c7c38c1c3a40649daa9f1152f`.
 Public clean import: `3789b1aed8f40f21e7a7be34af7f6b46bc23d78a` (same upstream tree, no private history).
-Private build source: `5e984755c` on `local/paseo-0.8.0`.
+Exact source commits for each build are recorded in the attached `build.json`.
 Public source: https://github.com/feixqemn/paseo-smooth-ui.
 The private archive contains complete Paseo source, Pi baseline/overrides, the full upstream diff,
-and original reviewed PR patches. Its release `custom-2026-09-12.2` contains the private desktop;
+and original reviewed PR patches. Its release `custom-2026-09-12.3` contains the private desktop;
 Pi's complete runtime remains in `custom-2026-09-11.2`.
 
 Paseo desktop bundles its daemon/CLI. Pi is a separate installed provider executable: updating
@@ -32,11 +32,12 @@ that they ship in the public binary.
 | Desktop opener | One bridge invokes `showItemInFolder` or `openPath`; invalid paths and OS errors are surfaced. These actions require the desktop and local daemon. | workspace file dispatcher, desktop opener bridge and IPC |
 | Alt-click | Removes RN Web's unconditional Alt filter at its existing PressResponder. Selection/long-press cancellation is retained. | `patches/react-native-web+0.21.2.patch`, `scripts/postinstall-patches.mjs` |
 | Activity grouping | Consecutive reasoning and tool calls share one overview summary; ordinary replies stay outside. Uses existing grouping, retained history/live projection and message IDs. | `agent-stream/view.tsx`, `tool-calls/detail-level/`, virtualization row estimate |
-| Thinking details | Cloud icon and the same compact row as tools; first provider-text line is the summary. Clicking shows available provider reasoning as Markdown; no invented details. | `ThoughtSlot` in `agent-stream/view.tsx` |
+| Thinking details | Cloud icon and tool-aligned typography; all provider thinking text is rendered directly as Markdown, with no derived title, truncation or duplicate disclosure. Current reasoning events contain only text, not independent summary/detail fields. | `ThoughtSlot` in `agent-stream/view.tsx` |
 | Disclosure animation | Existing ExpandableBadge uses 220ms height transition, fade and chevron rotation; closing retains content until transition ends. | `components/message.tsx` |
 | Loading animation | Activity/tool labels sweep a gradient while running; expanded streaming reasoning uses the same subtle visual treatment. Reduced motion is respected. | `components/message.tsx`, overview loading state |
 | Sent Markdown | User messages render Markdown after submission. Input and copy retain source; reasoning uses the assistant renderer and file links. | `components/message.tsx` |
-| Chinese emphasis | Strong markers next to CJK punctuation, including horizontal space before a closing marker, use normal delimiter balancing. Code and escaped markers remain literal. | `utils/markdown-parser.ts` |
+| Long Markdown | Chat surfaces constrain intrinsic width; wide content scrolls inside the renderer. Messages over 480px collapse with Show more / Show less; active assistant output and thinking stay visible. Full source/copy stays unchanged. | `components/message.tsx`, `components/markdown/renderer.tsx` |
+| Chinese emphasis | Strong markers next to CJK punctuation, including Chinese curly quotes and horizontal space before a closing marker, use normal delimiter balancing. Code and escaped markers remain literal. | `utils/markdown-parser.ts` |
 | Preferences cleanup | New profiles use Overview. Removed the obsolete auto-expand reasoning setting from the UI; retained its stored field for existing profiles. | settings Appearance, storage |
 | Terminal plumbing | File link events carry modifier values through native/web terminal bridges into the shared resolver. | terminal runtime, webview, generated terminal HTML |
 
@@ -50,7 +51,8 @@ its existing tool-group sheet; the animated inline disclosure is for desktop/web
 - `be13978`: moved reasoning into the existing activity group; added disclosure animation and Alt fix.
 - `09a09f1`: cloud reasoning rows/details and CJK strong emphasis.
 - The public binary release adds fixed signing, its own update feed and embedded change records.
-- The first inline-reasoning presentation is superseded by grouped reasoning with clickable details.
+- `smooth.20260912.2` / `custom.20260912.3`: remove the mistaken first-line title and duplicate thinking detail panel; display provider text directly. Fix Chinese curly-quote boundaries in bold emphasis.
+- Reasoning remains inside the activity group. The later first-line-title/duplicate-detail presentation is also superseded: show the provider text directly.
   Do not restore the obsolete standalone Thinking block or the old auto-expand toggle while merging.
 - Private equivalents are `bd8eb7a4` (initial UI/grouping/motion) and `5e984755c` (reasoning/CJK).
 

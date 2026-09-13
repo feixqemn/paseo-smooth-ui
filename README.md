@@ -41,8 +41,6 @@ Read the [features](docs/features.md) and [actual rendered examples](docs/exampl
 This independent fork preserves the Apache-2.0 license and upstream attribution. It changes the
 UI and desktop file opener; it does not change Pi or daemon message delivery.
 
-![Activity and thinking details](docs/images/activity-walkthrough.gif)
-
 Download the [macOS Apple Silicon build](https://github.com/feixqemn/paseo-smooth-ui/releases/latest).
 The [complete change record](docs/changes.md) identifies the upstream base, every UI change,
 related private customizations, and merge locations. Existing profiles retain their saved preferences:

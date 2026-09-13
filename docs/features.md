@@ -34,8 +34,7 @@ The transcript reads as one continuous exchange:
   its own transcript block in Overview mode; expand the row to read it.
 - Markdown in reasoning and assistant messages uses the same readable renderer: headings, lists,
   emphasis, links, block quotes, tables, and fenced code remain visually distinct.
-- The summary names the tool activity. Inside, reasoning uses the same compact row as tools, with a cloud icon. Click the
-  reasoning row to read provider-supplied Markdown details; individual tool entries keep their order.
+- The summary names the tool activity. Inside, reasoning uses the same compact row as tools, with a cloud icon. Provider thinking text is displayed directly as Markdown, with no generated title or duplicate nested panel; individual tool entries keep their order.
 - Reasoning and tool summaries keep their actual event order, so the compact view does not rewrite
   the conversation.
 - The activity summary has a text-gradient sweep while reasoning or tools are running.
@@ -47,6 +46,9 @@ Sent user messages render as Markdown after submission. The composer keeps the r
 so editing and copying preserve exactly what the user wrote. Chinese strong emphasis also handles
 punctuation touching the markers and horizontal space before a closing marker, without rewriting
 source text, escaped markers, or code.
+
+Messages taller than 480px offer Show more / Show less. Wide Markdown content scrolls within its
+message instead of expanding the transcript; original text and full-copy behavior are preserved.
 
 ## Scope
 

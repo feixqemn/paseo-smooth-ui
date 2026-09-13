@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useState,
   type ComponentType,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import {
@@ -32,7 +33,7 @@ import { createMarkdownParser } from "@/utils/markdown-parser";
 import { createCompactMarkdownStyles, createMarkdownStyles } from "@/styles/markdown-styles";
 import type { Theme } from "@/styles/theme";
 import { openExternalUrl } from "@/utils/open-external-url";
-import { isNative } from "@/constants/platform";
+import { isNative, isWeb } from "@/constants/platform";
 import {
   splitHtmlishMarkdown,
   type MarkdownDisplayPart,
@@ -43,11 +44,19 @@ import { groupMarkdownParts, type MarkdownPartGroup } from "./part-groups";
 import { colorMarkdownLinkChildren } from "./link-children";
 import { MarkdownLinkText } from "./link-text";
 
+const markdownWebBounds: CSSProperties = {
+  minWidth: 0,
+  maxWidth: "100%",
+  width: "100%",
+  overflowX: "auto",
+};
+const markdownNativeBounds: ViewStyle = { minWidth: 0, maxWidth: "100%" };
+
 export type MarkdownStyles = Record<string, TextStyle & ViewStyle & { [key: string]: unknown }>;
 
 interface MarkdownWithStableRendererProps {
   children: ReactNode;
-  style: ReturnType<typeof createMarkdownStyles> | ReturnType<typeof createCompactMarkdownStyles>;
+  style: MarkdownStyles;
   rules?: RenderRules;
   markdownit?: ReturnType<typeof MarkdownIt>;
   onLinkPress?: (url: string) => boolean;
@@ -66,6 +75,22 @@ function compactMarkdownStyleMapping(theme: Theme): Partial<MarkdownWithStableRe
   return { style: createCompactMarkdownStyles(theme) };
 }
 
+function activityMarkdownStyleMapping(theme: Theme): Partial<MarkdownWithStableRendererProps> {
+  const style = createCompactMarkdownStyles(theme);
+  return {
+    style: {
+      ...style,
+      body: {
+        ...style.body,
+        fontSize: theme.fontSize.base,
+        lineHeight: 22,
+        color: theme.colors.foregroundMuted,
+      },
+      paragraph: { ...style.paragraph, marginBottom: 0 },
+    },
+  };
+}
+
 // Serves PR comment bodies and the markdown file preview; agent chat passes its
 // own parser. The preview has to show the bytes on disk, so no typographer.
 const defaultMarkdownParser = createMarkdownParser({ linkify: true });
@@ -74,6 +99,7 @@ const MARKDOWN_LIST_ITEM_CONTENT_FLEX: ViewStyle = { flex: 1, flexShrink: 1, min
 export interface MarkdownRendererProps {
   text: string;
   compact?: boolean;
+  activity?: boolean;
   rules?: RenderRules;
   markdownit?: ReturnType<typeof MarkdownIt>;
   onLinkPress?: (url: string) => boolean;
@@ -85,6 +111,7 @@ export interface MarkdownRendererProps {
 export function MarkdownRenderer({
   text,
   compact = false,
+  activity = false,
   rules,
   markdownit = defaultMarkdownParser,
   onLinkPress,
@@ -100,6 +127,7 @@ export function MarkdownRenderer({
   const rendererProps = useMemo(
     () => ({
       compact,
+      activity,
       rules: markdownRules,
       markdownit,
       onLinkPress,
@@ -109,6 +137,7 @@ export function MarkdownRenderer({
     [
       allowedImageHandlers,
       compact,
+      activity,
       markdownRules,
       markdownit,
       onLinkPress,
@@ -116,7 +145,14 @@ export function MarkdownRenderer({
     ],
   );
 
-  return <MarkdownPartList parts={parts} rendererProps={rendererProps} />;
+  const content = <MarkdownPartList parts={parts} rendererProps={rendererProps} />;
+  // Constrain the Markdown surface itself: intrinsically wide code/tables scroll
+  // here instead of widening their chat bubble or the transcript.
+  return isWeb ? (
+    <div style={markdownWebBounds}>{content}</div>
+  ) : (
+    <View style={markdownNativeBounds}>{content}</View>
+  );
 }
 
 type MarkdownPartRendererProps = Omit<MarkdownRendererProps, "text" | "enableHtmlish"> & {
@@ -194,13 +230,15 @@ function MarkdownPart({
 function MarkdownFragment({
   text,
   compact,
+  activity,
   rules,
   markdownit,
   onLinkPress,
   allowedImageHandlers,
   topLevelMaxExceededItem,
 }: MarkdownRendererProps & { rules: RenderRules }) {
-  const uniProps = compact ? compactMarkdownStyleMapping : markdownStyleMapping;
+  let uniProps = compact ? compactMarkdownStyleMapping : markdownStyleMapping;
+  if (activity) uniProps = activityMarkdownStyleMapping;
   return (
     <ThemedMarkdown
       uniProps={uniProps}

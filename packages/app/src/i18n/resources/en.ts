@@ -3,6 +3,8 @@ export const en = {
     back: "Back",
     loading: "Loading...",
     actions: {
+      showMore: "Show more",
+      showLess: "Show less",
       back: "Back",
       cancel: "Cancel",
       close: "Close",

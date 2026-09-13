@@ -32,6 +32,7 @@ import { type ASTNode, type RenderRules } from "react-native-markdown-display";
 import MaskedView from "@react-native-masked-view/masked-view";
 import {
   Info,
+  Cloud,
   XCircle,
   ChevronRight,
   Check,
@@ -337,6 +338,8 @@ const userMessageStylesheet = StyleSheet.create((theme) => ({
   },
   content: {
     alignItems: "flex-end",
+    minWidth: 0,
+    flexShrink: 1,
     maxWidth: "100%",
     cursor: "auto",
   },
@@ -350,6 +353,7 @@ const userMessageStylesheet = StyleSheet.create((theme) => ({
     marginBottom: theme.spacing[4],
   },
   bubble: {
+    maxWidth: "100%",
     backgroundColor: theme.colors.surface3,
     borderRadius: theme.borderRadius["2xl"],
     borderTopRightRadius: theme.borderRadius.sm,
@@ -407,6 +411,52 @@ const userMessageStylesheet = StyleSheet.create((theme) => ({
     fontSize: STREAM_METADATA_FONT_SIZE,
   },
 }));
+
+const MESSAGE_PREVIEW_HEIGHT = 480;
+const messagePreviewStyles = StyleSheet.create((theme) => ({
+  bounds: { minWidth: 0, maxWidth: "100%", overflow: "hidden" },
+  clipped: { maxHeight: MESSAGE_PREVIEW_HEIGHT },
+  toggle: { alignSelf: "flex-start", paddingVertical: theme.spacing[2] },
+  toggleText: { color: theme.colors.foregroundMuted, fontSize: theme.fontSize.base },
+}));
+
+function CollapsibleMessageContent({
+  children,
+  enabled = true,
+}: {
+  children: ReactNode;
+  enabled?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const [isLong, setIsLong] = useState(false);
+  const toggle = useCallback(() => setExpanded((value) => !value), []);
+  const accessibilityState = useMemo(() => ({ expanded }), [expanded]);
+  const measure = useCallback((event: LayoutChangeEvent) => {
+    setIsLong(event.nativeEvent.layout.height > MESSAGE_PREVIEW_HEIGHT);
+  }, []);
+  return (
+    <View style={messagePreviewStyles.bounds}>
+      <View
+        style={[messagePreviewStyles.bounds, enabled && !expanded && messagePreviewStyles.clipped]}
+      >
+        <View onLayout={measure}>{children}</View>
+      </View>
+      {enabled && isLong ? (
+        <Pressable
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityState={accessibilityState}
+          style={messagePreviewStyles.toggle}
+        >
+          <Text style={messagePreviewStyles.toggleText}>
+            {t(expanded ? "common.actions.showLess" : "common.actions.showMore")}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
 
 interface UserMessageImagePillProps {
   image: UserMessageImageAttachment;
@@ -544,12 +594,14 @@ export const UserMessage = memo(function UserMessage({
             </View>
           ) : null}
           {hasText ? (
-            <MarkdownRenderer
-              text={message}
-              compact
-              enableHtmlish={false}
-              allowedImageHandlers={MARKDOWN_ALLOWED_IMAGE_HANDLERS}
-            />
+            <CollapsibleMessageContent>
+              <MarkdownRenderer
+                text={message}
+                compact
+                enableHtmlish={false}
+                allowedImageHandlers={MARKDOWN_ALLOWED_IMAGE_HANDLERS}
+              />
+            </CollapsibleMessageContent>
           ) : null}
         </View>
         {hasText ? (
@@ -778,8 +830,7 @@ export const assistantMessageStylesheet = StyleSheet.create((theme) => ({
   reasoningContainer: {
     position: "relative",
     overflow: "hidden",
-    paddingVertical: theme.spacing[1],
-    opacity: 0.78,
+    paddingVertical: 0,
   },
   reasoningShimmer: {
     position: "absolute",
@@ -1407,8 +1458,15 @@ function AssistantMessageBlockContainer({
   );
 }
 
+const ThemedReasoningCloud = withUnistyles(Cloud);
+const reasoningRowStyles = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "flex-start" },
+  content: { flex: 1, minWidth: 0 },
+});
+
 interface MemoizedMarkdownBlockProps {
   text: string;
+  activity?: boolean;
   rules: RenderRules;
   parser: MarkdownIt;
   onLinkPress: (url: string) => boolean;
@@ -1416,6 +1474,7 @@ interface MemoizedMarkdownBlockProps {
 
 const MemoizedMarkdownBlock = React.memo(function MemoizedMarkdownBlock({
   text,
+  activity,
   rules,
   parser,
   onLinkPress,
@@ -1423,6 +1482,7 @@ const MemoizedMarkdownBlock = React.memo(function MemoizedMarkdownBlock({
   return (
     <MarkdownRenderer
       text={text}
+      activity={activity}
       enableHtmlish={false}
       rules={rules}
       markdownit={parser}
@@ -2019,16 +2079,18 @@ export const AssistantMessage = memo(function AssistantMessage({
     [occurrenceKey, revealedMessage.length],
   );
 
-  return (
+  const blockSpacing = variant === "reasoning" ? 4 : 12;
+  const content = (
     <View testID="assistant-message" dataSet={revealDataSet} style={assistantContainerStyle}>
       {keyedBlocks.map(({ key, block }, index) => (
         <AssistantMessageBlockContainer
           key={key}
           block={block}
-          marginBottom={index < keyedBlocks.length - 1 ? 12 : 0}
+          marginBottom={index < keyedBlocks.length - 1 ? blockSpacing : 0}
         >
           <MemoizedMarkdownBlock
             text={block}
+            activity={variant === "reasoning"}
             rules={markdownRules}
             parser={markdownParser}
             onLinkPress={handleMarkdownLinkPress}
@@ -2046,6 +2108,28 @@ export const AssistantMessage = memo(function AssistantMessage({
       {reasoningShimmerStyle ? (
         <View pointerEvents="none" style={reasoningShimmerStyle as never} />
       ) : null}
+    </View>
+  );
+  if (variant !== "reasoning")
+    return (
+      <CollapsibleMessageContent enabled={phase === "complete"}>
+        {content}
+      </CollapsibleMessageContent>
+    );
+  return (
+    <View
+      style={[
+        expandableBadgeStylesheet.container,
+        expandableBadgeStylesheet.containerSpacing,
+        expandableBadgeStylesheet.pressable,
+      ]}
+    >
+      <View style={reasoningRowStyles.row}>
+        <View style={expandableBadgeStylesheet.iconBadge}>
+          <ThemedReasoningCloud size={14} uniProps={foregroundMutedColorMapping} />
+        </View>
+        <View style={reasoningRowStyles.content}>{content}</View>
+      </View>
     </View>
   );
 });

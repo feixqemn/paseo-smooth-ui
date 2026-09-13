@@ -6,6 +6,8 @@ export const ru: TranslationResources = {
     back: "Назад",
     loading: "Загрузка...",
     actions: {
+      showMore: "Показать больше",
+      showLess: "Свернуть",
       back: "Назад",
       cancel: "Отмена",
       close: "Закрыть",

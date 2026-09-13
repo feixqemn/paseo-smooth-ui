@@ -25,12 +25,11 @@ import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { MAX_CONTENT_WIDTH, useIsCompactFormFactor } from "@/constants/layout";
 import { useMutation } from "@tanstack/react-query";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { Check, ChevronDown, Cloud, X } from "lucide-react-native";
+import { Check, ChevronDown, X } from "lucide-react-native";
 import { buildWorkspaceTabPersistenceKey } from "@/workspace-tabs/model";
 import { openExplorerSidebarView } from "@/workspace-tabs/explorer-sidebar";
 import {
   AssistantMessage,
-  ExpandableBadge,
   SpeakMessage,
   UserMessage,
   Notification,
@@ -1295,7 +1294,7 @@ interface ThoughtSlotProps {
   client?: DaemonClient | null;
 }
 
-// Use the same row and disclosure as tools; provider reasoning remains Markdown inside.
+// The provider's reasoning is content, not a derived title or duplicate detail panel.
 function ThoughtSlot({
   itemId,
   text,
@@ -1305,42 +1304,16 @@ function ThoughtSlot({
   serverId,
   client,
 }: ThoughtSlotProps) {
-  const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
-  const hasDetails = text.trim().length > 0;
-  const heading = text
-    .trim()
-    .split(/\r?\n/, 1)[0]
-    ?.replace(/^#{1,6}\s+/, "")
-    .replace(/[*_`]/g, "");
-  const label =
-    heading ||
-    t(status === "ready" ? "toolCallGroup.thought" : "toolCallGroup.thinking");
   return (
-    <ExpandableBadge
-      testID={`thought-${itemId}`}
-      label={label}
-      icon={Cloud}
-      isExpanded={expanded}
-      isLoading={status !== "ready"}
-      onToggle={hasDetails ? () => setExpanded((value) => !value) : undefined}
-      borderlessWhenExpanded
-      renderDetails={
-        hasDetails
-          ? () => (
-              <AssistantMessage
-                occurrenceKey={`thought:${itemId}`}
-                message={text}
-                timestamp={timestamp}
-                workspaceRoot={workspaceRoot}
-                serverId={serverId}
-                client={client}
-                phase={status === "ready" ? "complete" : "streaming"}
-                variant="reasoning"
-              />
-            )
-          : undefined
-      }
+    <AssistantMessage
+      occurrenceKey={`thought:${itemId}`}
+      message={text}
+      timestamp={timestamp}
+      workspaceRoot={workspaceRoot}
+      serverId={serverId}
+      client={client}
+      phase={status === "ready" ? "complete" : "streaming"}
+      variant="reasoning"
     />
   );
 }
