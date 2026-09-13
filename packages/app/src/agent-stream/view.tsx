@@ -838,7 +838,7 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
         item: Extract<StreamItem, { kind: "tool_call" | "thought" }>,
       ) => {
         const group = getToolCallGroup(item.id);
-        if (!group) {
+        if (!group || group.run.calls.length === 1) {
           return item.kind === "thought"
             ? renderThoughtItem(layoutItem, item)
             : renderSingleToolCallItem(item, layoutItem.isLastInToolSequence);

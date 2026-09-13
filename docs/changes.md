@@ -7,15 +7,15 @@ are frozen at the original review date, not a claim about today's upstream state
 
 | Track | Version | Base | Included changes |
 | --- | --- | --- | --- |
-| Public Smooth UI | `0.8.0-smooth.20260912.2` | Official Paseo `v0.8.0` | All UI changes below; stock 0.8.0 daemon behavior |
-| Private customization | `0.8.0-custom.20260912.3` | Official Paseo `v0.8.0` + custom Pi `0.85.1` | Same UI changes, plus the private runtime changes and integrations below |
+| Public Smooth UI | `0.8.0-smooth.20260912.3` | Official Paseo `v0.8.0` | All UI changes below; stock 0.8.0 daemon behavior |
+| Private customization | `0.8.0-custom.20260912.4` | Official Paseo `v0.8.0` + custom Pi `0.85.1` | Same UI changes, plus the private runtime changes and integrations below |
 
 Official Paseo base: `b8e24677e12b226c7c38c1c3a40649daa9f1152f`.
 Public clean import: `3789b1aed8f40f21e7a7be34af7f6b46bc23d78a` (same upstream tree, no private history).
 Exact source commits for each build are recorded in the attached `build.json`.
 Public source: https://github.com/feixqemn/paseo-smooth-ui.
 The private archive contains complete Paseo source, Pi baseline/overrides, the full upstream diff,
-and original reviewed PR patches. Its release `custom-2026-09-12.3` contains the private desktop;
+and original reviewed PR patches. Its release `custom-2026-09-12.4` contains the private desktop;
 Pi's complete runtime remains in `custom-2026-09-11.2`.
 
 Paseo desktop bundles its daemon/CLI. Pi is a separate installed provider executable: updating
@@ -31,7 +31,7 @@ that they ship in the public binary.
 | Layout settings | Modifier actions are configurable. New profiles open files/diffs/subagents on the right; existing saved preferences remain intact. | settings storage, Layout section, locale strings |
 | Desktop opener | One bridge invokes `showItemInFolder` or `openPath`; invalid paths and OS errors are surfaced. These actions require the desktop and local daemon. | workspace file dispatcher, desktop opener bridge and IPC |
 | Alt-click | Removes RN Web's unconditional Alt filter at its existing PressResponder. Selection/long-press cancellation is retained. | `patches/react-native-web+0.21.2.patch`, `scripts/postinstall-patches.mjs` |
-| Activity grouping | Consecutive reasoning and tool calls share one overview summary; ordinary replies stay outside. Uses existing grouping, retained history/live projection and message IDs. | `agent-stream/view.tsx`, `tool-calls/detail-level/`, virtualization row estimate |
+| Activity grouping | A single thinking/tool/search item renders directly; two or more consecutive activity items share one overview summary. Ordinary replies stay outside. Uses existing grouping, retained history/live projection and message IDs. | `agent-stream/view.tsx`, `tool-calls/detail-level/`, virtualization row estimate |
 | Thinking details | Cloud icon and tool-aligned typography; all provider thinking text is rendered directly as Markdown, with no derived title, truncation or duplicate disclosure. Current reasoning events contain only text, not independent summary/detail fields. | `ThoughtSlot` in `agent-stream/view.tsx` |
 | Disclosure animation | Existing ExpandableBadge uses 220ms height transition, fade and chevron rotation; closing retains content until transition ends. | `components/message.tsx` |
 | Loading animation | Activity/tool labels sweep a gradient while running; expanded streaming reasoning uses the same subtle visual treatment. Reduced motion is respected. | `components/message.tsx`, overview loading state |
@@ -46,6 +46,8 @@ modifiers are not separately wired; their ordinary click continues to follow Lay
 its existing tool-group sheet; the animated inline disclosure is for desktop/web.
 
 ### UI history and superseded choices
+
+- `smooth.20260912.3` / `custom.20260912.4`: singleton activity rows bypass the group wrapper, retaining the original row and its own tool details. Existing grouping IDs and live/history projection are unchanged.
 
 - `4e55493`: initial file gestures, sent Markdown and inline reasoning.
 - `be13978`: moved reasoning into the existing activity group; added disclosure animation and Alt fix.
