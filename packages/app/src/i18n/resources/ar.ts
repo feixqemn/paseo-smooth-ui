@@ -1841,6 +1841,8 @@ export const ar: TranslationResources = {
     output: "الإخراج",
   },
   toolCallGroup: {
+    thinking: "جارٍ التفكير…",
+    thought: "تفكير",
     editedFiles: {
       one: "حرّر {{count}} ملفًا",
       other: "حرّر {{count}} ملفات",

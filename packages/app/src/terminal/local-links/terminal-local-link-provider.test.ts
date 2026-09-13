@@ -35,7 +35,7 @@ describe("createTerminalLocalFileLinkProvider", () => {
     });
   });
 
-  it("opens resolved links with assistant-style disposition semantics", async () => {
+  it("passes click modifiers to the shared file-opening settings", async () => {
     const terminal = createTerminal(["src/file.ts:42"]);
     const target = { path: "/repo/src/file.ts", lineStart: 42 };
     const openLink = vi.fn();
@@ -47,7 +47,11 @@ describe("createTerminalLocalFileLinkProvider", () => {
     const [link] = (await provideLinks(provider, 1)) ?? [];
     link?.activate({ preventDefault: vi.fn(), ctrlKey: true } as unknown as MouseEvent, link.text);
 
-    expect(openLink).toHaveBeenCalledWith(target, "side", expect.anything());
+    expect(openLink).toHaveBeenCalledWith(
+      target,
+      { altKey: false, ctrlKey: true, metaKey: false },
+      expect.anything(),
+    );
   });
 
   it("does not expose unresolved candidates as links", async () => {

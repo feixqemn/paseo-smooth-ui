@@ -1851,6 +1851,8 @@ export const en = {
     output: "Output",
   },
   toolCallGroup: {
+    thinking: "Thinking…",
+    thought: "Thought",
     editedFiles: {
       one: "edited {{count}} file",
       other: "edited {{count}} files",

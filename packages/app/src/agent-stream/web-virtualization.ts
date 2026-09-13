@@ -63,9 +63,9 @@ export function estimateStreamItemHeight(item: StreamItem): number {
     case "user_message":
       return item.images && item.images.length > 0 ? 220 : 96;
     case "assistant_message":
-    case "thought":
       return estimateAssistantMessageHeightFromCache(item.text) ?? 220;
     case "tool_call":
+    case "thought":
       return COLLAPSED_TOOL_SEQUENCE_ROW_HEIGHT_ESTIMATE;
     case "todo_list":
       return 144;

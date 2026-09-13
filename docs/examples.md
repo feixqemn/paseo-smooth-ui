@@ -13,10 +13,12 @@ keep the Markdown source.
 
 ## Reasoning and adjacent tools
 
-Reasoning stays visible without a Thinking header or card. Adjacent tool calls share an expandable
-summary, between the surrounding text in chronological order.
+Reasoning and adjacent tools collapse into a single summary. Expand it to see the Markdown
+reasoning and individual tool calls in chronological order; normal replies stay outside.
 
-![Reasoning and adjacent tool summary](images/reasoning-tools.png)
+![Collapsed activity summary](images/activity-collapsed.png)
+
+![Expanded activity with reasoning and tools](images/reasoning-tools.png)
 
 ## Try it
 

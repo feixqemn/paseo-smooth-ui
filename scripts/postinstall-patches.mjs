@@ -8,6 +8,11 @@ import { join, relative } from "node:path";
 // workspace root live in their workspace's own node_modules, and patch-package resolves
 // the patch's node_modules/... paths relative to its working directory.
 const patchedPackages = [
+  // Preserve modifier clicks: Paseo explicitly maps Option/Alt file opens.
+  {
+    nodeModulesPath: "node_modules/react-native-web",
+    patchPrefix: "react-native-web+",
+  },
   {
     nodeModulesPath: "node_modules/react-native-markdown-display",
     patchPrefix: "react-native-markdown-display+",

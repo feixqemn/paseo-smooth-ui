@@ -41,7 +41,7 @@ Read the [features](docs/features.md) and [actual rendered examples](docs/exampl
 This independent fork preserves the Apache-2.0 license and upstream attribution. It changes the
 UI and desktop file opener; it does not change Pi or daemon message delivery.
 
-![Continuous reasoning and compact tools](docs/images/reasoning-tools.png)
+![Reasoning and tools in one expandable activity summary](docs/images/reasoning-tools.png)
 
 The source is ready to build using the upstream instructions below. No prebuilt public installer
 is published with this initial source release. Existing profiles retain their saved preferences:

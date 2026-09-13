@@ -31,13 +31,17 @@ function isSearchCall(name: string): boolean {
 export function buildOverviewGroup(run: ToolCallRun): OverviewToolCallGroup {
   const editedFiles = new Set<string>();
   const readFiles = new Set<string>();
-  let isLoading = false;
+  let isLoading = !run.isSealed;
   let commandCount = 0;
   let searchCount = 0;
   let otherToolCount = 0;
   let paseoCallCount = 0;
 
   for (const call of run.calls) {
+    if (call.kind === "thought") {
+      isLoading ||= call.status !== "ready";
+      continue;
+    }
     const descriptor = describeToolCall(call);
     const normalizedName = descriptor.name.trim().toLowerCase();
     isLoading ||= descriptor.status === "running" || descriptor.status === "executing";

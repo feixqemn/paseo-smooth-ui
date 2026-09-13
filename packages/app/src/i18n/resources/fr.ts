@@ -1892,6 +1892,8 @@ export const fr: TranslationResources = {
     output: "Sortir",
   },
   toolCallGroup: {
+    thinking: "Réflexion…",
+    thought: "Réflexion",
     editedFiles: {
       one: "a modifié {{count}} fichier",
       other: "a modifié {{count}} fichiers",

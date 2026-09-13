@@ -62,7 +62,10 @@ export const OverviewToolCallGroupView = memo(function OverviewToolCallGroupView
 }: OverviewGroupProps) {
   const scrollRef = useRef<ScrollView>(null);
   const isCompact = useIsCompactFormFactor();
-  const aggregateSummary = useOverviewSummary(group.summary);
+  const { t } = useTranslation();
+  const toolSummary = useOverviewSummary(group.summary);
+  const aggregateSummary =
+    toolSummary || t(group.isLoading ? "toolCallGroup.thinking" : "toolCallGroup.thought");
   const scrollToLatest = useCallback(() => {
     scrollRef.current?.scrollToEnd({ animated: false });
   }, []);

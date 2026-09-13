@@ -124,7 +124,7 @@ describe("splitWebVirtualizedHistory", () => {
 describe("estimateStreamItemHeight", () => {
   it("uses compact estimates for collapsed tool sequence rows", () => {
     expect(estimateStreamItemHeight(toolCall("tool", 1))).toBe(40);
-    expect(estimateStreamItemHeight(thought("thought", 2))).toBe(220);
+    expect(estimateStreamItemHeight(thought("thought", 2))).toBe(40);
   });
 
   it("uses a larger estimate for user messages with image attachments", () => {

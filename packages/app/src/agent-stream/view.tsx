@@ -833,10 +833,15 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
       projectedToolCalls.groupsByHostId.get(hostId),
     );
     const renderToolCallItem = useCallback(
-      (layoutItem: StreamLayoutItem, item: Extract<StreamItem, { kind: "tool_call" }>) => {
+      (
+        layoutItem: StreamLayoutItem,
+        item: Extract<StreamItem, { kind: "tool_call" | "thought" }>,
+      ) => {
         const group = getToolCallGroup(item.id);
         if (!group) {
-          return renderSingleToolCallItem(item, layoutItem.isLastInToolSequence);
+          return item.kind === "thought"
+            ? renderThoughtItem(layoutItem, item)
+            : renderSingleToolCallItem(item, layoutItem.isLastInToolSequence);
         }
         const expanded = expandedToolCallGroupIds.has(group.run.id);
         return (
@@ -849,11 +854,13 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
             {expanded
               ? group.run.calls.map((call, index) => (
                   <React.Fragment key={call.id}>
-                    {renderSingleToolCallItem(
-                      call,
-                      index === group.run.calls.length - 1,
-                      GROUPED_TOOL_CALL_DETAIL_MAX_HEIGHT,
-                    )}
+                    {call.kind === "thought"
+                      ? renderThoughtItem(layoutItem, call)
+                      : renderSingleToolCallItem(
+                          call,
+                          index === group.run.calls.length - 1,
+                          GROUPED_TOOL_CALL_DETAIL_MAX_HEIGHT,
+                        )}
                   </React.Fragment>
                 ))
               : null}
@@ -864,6 +871,7 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
         expandedToolCallGroupIds,
         getToolCallGroup,
         renderSingleToolCallItem,
+        renderThoughtItem,
         setToolCallGroupExpanded,
       ],
     );
@@ -879,8 +887,6 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
             return renderAssistantMessageItem(layoutItem, item);
 
           case "thought":
-            return renderThoughtItem(layoutItem, item);
-
           case "tool_call":
             return renderToolCallItem(layoutItem, item);
 

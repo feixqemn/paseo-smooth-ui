@@ -1,0 +1,24 @@
+diff --git a/node_modules/react-native-web/dist/modules/usePressEvents/PressResponder.js b/node_modules/react-native-web/dist/modules/usePressEvents/PressResponder.js
+--- a/node_modules/react-native-web/dist/modules/usePressEvents/PressResponder.js
++++ b/node_modules/react-native-web/dist/modules/usePressEvents/PressResponder.js
+@@ -310,7 +310,7 @@
+           event.stopPropagation();
+           if (this._longPressDispatched || this._selectionTerminated) {
+             event.preventDefault();
+-          } else if (onPress != null && event.altKey === false) {
++          } else if (onPress != null) {
+             onPress(event);
+           }
+         } else {
+diff --git a/node_modules/react-native-web/dist/cjs/modules/usePressEvents/PressResponder.js b/node_modules/react-native-web/dist/cjs/modules/usePressEvents/PressResponder.js
+--- a/node_modules/react-native-web/dist/cjs/modules/usePressEvents/PressResponder.js
++++ b/node_modules/react-native-web/dist/cjs/modules/usePressEvents/PressResponder.js
+@@ -312,7 +312,7 @@
+           event.stopPropagation();
+           if (this._longPressDispatched || this._selectionTerminated) {
+             event.preventDefault();
+-          } else if (onPress != null && event.altKey === false) {
++          } else if (onPress != null) {
+             onPress(event);
+           }
+         } else {

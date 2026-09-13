@@ -18,6 +18,7 @@ import * as React from "react";
 import {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   memo,
   useMemo,
@@ -2733,6 +2734,23 @@ export const ExpandableBadge = memo(function ExpandableBadge({
   const isInteractive = Boolean(onToggle);
   const hasDetailContent = Boolean(renderDetails);
   const detailContent = hasDetailContent && isExpanded ? renderDetails?.() : null;
+  const reducedMotion = useReducedMotion();
+  const [detailsMounted, setDetailsMounted] = useState(isExpanded);
+  const retainedDetails = useRef<ReactNode>(null);
+  useLayoutEffect(() => {
+    if (isExpanded) {
+      retainedDetails.current = detailContent;
+      setDetailsMounted(true);
+    } else if (reducedMotion || !isWeb) {
+      retainedDetails.current = null;
+      setDetailsMounted(false);
+    }
+  }, [detailContent, isExpanded, reducedMotion]);
+  const visibleDetails = isExpanded
+    ? detailContent
+    : detailsMounted
+      ? retainedDetails.current
+      : null;
   const detailWrapperRef = useRef<View | null>(null);
 
   const handleHoverIn = useCallback(() => setIsHovered(true), []);
@@ -2780,7 +2798,7 @@ export const ExpandableBadge = memo(function ExpandableBadge({
   } = computeShimmerMetrics({
     label,
     secondaryLabel,
-    isLoading,
+    isLoading: isLoading && !reducedMotion,
     labelRowWidth,
     labelRowHeight,
     labelOffsetX,
@@ -2956,9 +2974,10 @@ export const ExpandableBadge = memo(function ExpandableBadge({
       LUCIDE_CHEVRON_NUDGE_LEFT,
       inlineUnistylesStyle({
         transform: isExpanded ? [{ scale: 1.3 }, { rotate: "90deg" }] : [{ scale: 1.3 }],
+        ...(isWeb ? { transition: reducedMotion ? "none" : "transform 220ms ease" } : {}),
       }),
     ],
-    [isExpanded],
+    [isExpanded, reducedMotion],
   );
 
   const ThemedIcon = useMemo(() => (icon ? withUnistyles(icon) : null), [icon]);
@@ -3020,7 +3039,43 @@ export const ExpandableBadge = memo(function ExpandableBadge({
           />
         </View>
       </Pressable>
-      {detailContent ? (
+      {isWeb && hasDetailContent ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateRows: isExpanded ? "1fr" : "0fr",
+            opacity: isExpanded ? 1 : 0,
+            transition: reducedMotion
+              ? "none"
+              : "grid-template-rows 220ms cubic-bezier(0.2, 0, 0, 1), opacity 180ms ease",
+          }}
+          aria-hidden={!isExpanded}
+          inert={!isExpanded}
+          onTransitionEnd={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              event.propertyName === "grid-template-rows" &&
+              !isExpanded
+            ) {
+              retainedDetails.current = null;
+              setDetailsMounted(false);
+            }
+          }}
+        >
+          <div style={{ minHeight: 0, overflow: "hidden" }}>
+            {visibleDetails ? (
+              <Pressable
+                ref={detailWrapperRef}
+                style={detailWrapperStyle}
+                onHoverIn={handleDetailHoverIn}
+                onHoverOut={handleDetailHoverOut}
+              >
+                {visibleDetails}
+              </Pressable>
+            ) : null}
+          </div>
+        </div>
+      ) : detailContent ? (
         <Pressable
           ref={detailWrapperRef}
           style={detailWrapperStyle}

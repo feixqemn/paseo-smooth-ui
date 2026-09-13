@@ -7,11 +7,11 @@ Markdown renderer, tool grouping, Layout preferences, and desktop opener.
 
 File opening is predictable without making the common path slower.
 
-| Gesture | Configurable action | Smooth UI default |
-| --- | --- | --- |
-| Click | Follow the selected Layout destination | Open in the right pane |
-| Command-click on macOS / Ctrl-click on Windows and Linux | Choose an explicit open action | Open in Finder / the platform file manager |
-| Option-click on macOS / Alt-click on Windows and Linux | Choose an explicit open action | Open with the system default application |
+| Gesture                                                  | Configurable action                    | Smooth UI default                          |
+| -------------------------------------------------------- | -------------------------------------- | ------------------------------------------ |
+| Click                                                    | Follow the selected Layout destination | Open in the right pane                     |
+| Command-click on macOS / Ctrl-click on Windows and Linux | Choose an explicit open action         | Open in Finder / the platform file manager |
+| Option-click on macOS / Alt-click on Windows and Linux   | Choose an explicit open action         | Open with the system default application   |
 
 The settings expose these mappings in the same Layout area. A user can change the action while
 the gesture remains stable. The regular click therefore follows the Layout preference, while the
@@ -21,6 +21,7 @@ application.
 Modifier actions apply to chat file links, terminal file links, and Explorer file clicks.
 Finder/default-app actions require the desktop app and its local daemon. External web URLs keep
 their existing behavior. Option/Alt takes precedence if both modifier families are held.
+The bundled React Native Web compatibility patch preserves Alt clicks through its press handler.
 Each modifier offers: follow Layout, main pane, right pane, file manager, or default application.
 Existing saved Layout and tool-detail preferences are preserved; new profiles default to the right
 pane and tool overview. Choose Overview in Appearance to use adjacent tool summaries.
@@ -29,16 +30,18 @@ pane and tool overview. Choose Overview in Appearance to use adjacent tool summa
 
 The transcript reads as one continuous exchange:
 
-- Reasoning is rendered inline as it arrives, without a separate `Thinking` title or a heavy
-  thinking card.
+- Consecutive reasoning and tool calls share one compact activity row. Reasoning never creates
+  its own transcript block in Overview mode; expand the row to read it.
 - Markdown in reasoning and assistant messages uses the same readable renderer: headings, lists,
   emphasis, links, block quotes, tables, and fenced code remain visually distinct.
-- Adjacent tool calls are summarized into one compact, expandable row. Tool results stay in their
-  original order and remain available when expanded.
+- The summary names the tool activity. Inside, reasoning is rendered as Markdown and individual
+  tool entries remain available in their original order.
 - Reasoning and tool summaries keep their actual event order, so the compact view does not rewrite
   the conversation.
-- A lightweight gradient shimmer runs on the active streamed reasoning surface. It stops when
-  the stream settles and respects reduced-motion settings.
+- The activity summary has a text-gradient sweep while reasoning or tools are running.
+- Desktop/web disclosure opens and closes with a 220ms height transition and a soft fade.
+  Content is released after closing; rapid toggles reverse the transition. Motion respects
+  reduced-motion settings.
 
 Sent user messages render as Markdown after submission. The composer keeps the raw Markdown text
 so editing and copying preserve exactly what the user wrote.
