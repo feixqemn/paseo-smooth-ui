@@ -32,6 +32,8 @@ export type ReleaseChannel = "stable" | "beta";
 export type ServiceUrlBehavior = "ask" | "in-app" | "external";
 export type WorkspaceTitleSource = "title" | "branch";
 export type PullRequestOpenLocation = "main" | "side" | "explorer";
+import type { FileOpenModifierAction } from "@/workspace/file-open";
+export type { FileOpenModifierAction } from "@/workspace/file-open";
 /** What a sidebar workspace row shows in the space to the right of its title. */
 export type SidebarWorkspaceTrailing = "diff" | "timestamp" | "none";
 export type ToolCallDetailLevel = "overview" | "detailed";
@@ -92,6 +94,10 @@ export interface AppSettings {
   /** Desktop-only preferences for implicit opens into the ordinary side pane. */
   openInSidePane: OpenInSidePanePreferences;
   pullRequestOpenLocation: PullRequestOpenLocation;
+  /** File-link action while Command/Ctrl is held. */
+  commandClickFileOpenAction: FileOpenModifierAction;
+  /** File-link action while Option/Alt is held. */
+  optionClickFileOpenAction: FileOpenModifierAction;
 }
 
 export type AppSettingsUpdate =
@@ -107,11 +113,11 @@ export interface OpenInSidePanePreferences {
 }
 
 export const DEFAULT_OPEN_IN_SIDE_PANE_PREFERENCES: OpenInSidePanePreferences = {
-  explorerFiles: false,
-  diffs: false,
-  chatFiles: false,
-  diffFiles: false,
-  subagents: false,
+  explorerFiles: true,
+  diffs: true,
+  chatFiles: true,
+  diffFiles: true,
+  subagents: true,
 };
 
 export interface Settings extends AppSettings {
@@ -139,11 +145,13 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   sidebarChecksDisplay: DEFAULT_SIDEBAR_CHECKS_DISPLAY,
   sidebarNavItems: [],
   autoExpandReasoning: false,
-  toolCallDetailLevel: "detailed",
+  toolCallDetailLevel: "overview",
   chatOutlineEnabled: true,
   vimKeybindings: false,
   openInSidePane: DEFAULT_OPEN_IN_SIDE_PANE_PREFERENCES,
   pullRequestOpenLocation: "explorer",
+  commandClickFileOpenAction: "reveal",
+  optionClickFileOpenAction: "system",
 };
 
 export const DEFAULT_APP_SETTINGS: Settings = {
@@ -260,6 +268,12 @@ const StoredAppSettingsSchema = z
         legacyPullRequestsInSidePane: undefined,
       }),
     pullRequestOpenLocation: z.enum(["main", "side", "explorer"]).optional(),
+    commandClickFileOpenAction: z
+      .enum(["layout", "main", "side", "reveal", "system"])
+      .catch("reveal"),
+    optionClickFileOpenAction: z
+      .enum(["layout", "main", "side", "reveal", "system"])
+      .catch("system"),
     // COMPAT(explorerSidebarRouting): replaced by source-specific side-pane preferences in v0.6.
     openSupportingTabsInSidePanel: z.boolean().optional().catch(undefined),
     // COMPAT(rendererDesktopSettings): these fields used to share this renderer-owned key.

@@ -1905,7 +1905,22 @@ export const zhCN: TranslationResources = {
       diagnostics: "诊断",
       about: "关于",
     },
-    layout: en.settings.layout,
+    layout: {
+      ...en.settings.layout,
+      fileOpen: {
+        unavailable: "在文件管理器或默认应用中打开，需要使用本机桌面工作区。",
+        title: "修饰键点击文件",
+        commandClickFileOpenAction: "Command/Ctrl 点击",
+        optionClickFileOpenAction: "Option/Alt 点击",
+        actions: {
+          layout: "遵循打开位置",
+          main: "主面板",
+          side: "右侧",
+          reveal: "在 Finder 中显示",
+          system: "用默认应用打开",
+        },
+      },
+    },
     editor: {
       title: "编辑器",
       vimKeybindings: "Vim 键位",

@@ -9,6 +9,7 @@ import {
   type TerminalLinkSuffix,
   type TerminalParsedLink,
 } from "./terminal-local-link-parsing";
+import { getFileOpenModifiers, type FileOpenModifiers } from "@/workspace/file-open";
 
 export interface TerminalLocalFileLinkSource {
   text: string;
@@ -25,11 +26,7 @@ export interface TerminalLocalFileLinkTarget {
 
 export interface TerminalLocalFileLinkProviderOptions {
   resolveLink: (source: TerminalLocalFileLinkSource) => Promise<TerminalLocalFileLinkTarget | null>;
-  openLink: (
-    target: TerminalLocalFileLinkTarget,
-    disposition: "main" | "side",
-    event: MouseEvent,
-  ) => void;
+  openLink: (target: TerminalLocalFileLinkTarget, modifiers: FileOpenModifiers) => void;
 }
 
 const MAX_LINE_LENGTH = 2_000;
@@ -128,8 +125,7 @@ function createLocalFileLink(input: {
     },
     activate: (event) => {
       event.preventDefault();
-      const disposition = event.metaKey || event.ctrlKey ? "side" : "main";
-      input.options.openLink(input.target, disposition, event);
+      input.options.openLink(input.target, getFileOpenModifiers(event));
     },
   };
 }

@@ -25,7 +25,8 @@ function FilesPanel() {
   const { addFile, canAddToChat } = useAddFileToChat({ serverId, workspaceId });
   invariant(target.kind === "files", "FilesPanel requires files target");
   const onOpenFile = useCallback(
-    (path: string) => openPreferredTarget({ kind: "file", path }, "explorerFiles"),
+    (path: string, event?: unknown) =>
+      openPreferredTarget({ kind: "file", path }, "explorerFiles", event),
     [openPreferredTarget],
   );
   const onOpenFileToSide = useCallback(

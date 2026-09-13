@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SettingsSection, SettingsCard, SettingsSelect } from "@/components/settings";
 import {
   useAppSettings,
+  type FileOpenModifierAction,
   type OpenInSidePanePreferences,
   type PullRequestOpenLocation,
 } from "@/hooks/use-settings";
@@ -16,6 +17,15 @@ const SOURCES = [
 ] as const satisfies readonly (keyof OpenInSidePanePreferences)[];
 
 type LayoutPreferenceSource = keyof OpenInSidePanePreferences | "pullRequests";
+type FileOpenModifierSetting = "commandClickFileOpenAction" | "optionClickFileOpenAction";
+
+const FILE_OPEN_ACTIONS = [
+  "layout",
+  "main",
+  "side",
+  "reveal",
+  "system",
+] as const satisfies readonly FileOpenModifierAction[];
 
 function LayoutPreferenceRow({
   source,
@@ -52,6 +62,38 @@ function LayoutPreferenceRow({
   );
 }
 
+function FileOpenModifierRow({
+  setting,
+  value,
+  onValueChange,
+}: {
+  setting: FileOpenModifierSetting;
+  value: FileOpenModifierAction;
+  onValueChange(setting: FileOpenModifierSetting, value: FileOpenModifierAction): void;
+}) {
+  const { t } = useTranslation();
+  const options = useMemo(
+    () =>
+      FILE_OPEN_ACTIONS.map((option) => ({
+        value: option,
+        label: t(`settings.layout.fileOpen.actions.${option}`),
+      })),
+    [t],
+  );
+  const change = useCallback(
+    (nextValue: FileOpenModifierAction) => onValueChange(setting, nextValue),
+    [onValueChange, setting],
+  );
+  return (
+    <SettingsSelect
+      label={t(`settings.layout.fileOpen.${setting}`)}
+      value={value}
+      options={options}
+      onValueChange={change}
+    />
+  );
+}
+
 export function LayoutSection() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useAppSettings();
@@ -67,24 +109,46 @@ export function LayoutSection() {
     },
     [settings.openInSidePane, updateSettings],
   );
+  const handleFileOpenModifierChange = useCallback(
+    (setting: FileOpenModifierSetting, value: FileOpenModifierAction) => {
+      void updateSettings({ [setting]: value });
+    },
+    [updateSettings],
+  );
   return (
-    <SettingsSection title={t("settings.layout.openInSidePane.title")}>
-      <SettingsCard>
-        {SOURCES.map((source) => (
+    <>
+      <SettingsSection title={t("settings.layout.openInSidePane.title")}>
+        <SettingsCard>
+          {SOURCES.map((source) => (
+            <LayoutPreferenceRow
+              key={source}
+              source={source}
+              destination={settings.openInSidePane[source] ? "side" : "main"}
+              onDestinationChange={handleDestinationChange}
+            />
+          ))}
           <LayoutPreferenceRow
-            key={source}
-            source={source}
-            destination={settings.openInSidePane[source] ? "side" : "main"}
+            source="pullRequests"
+            destination={settings.pullRequestOpenLocation}
+            allowExplorer
             onDestinationChange={handleDestinationChange}
           />
-        ))}
-        <LayoutPreferenceRow
-          source="pullRequests"
-          destination={settings.pullRequestOpenLocation}
-          allowExplorer
-          onDestinationChange={handleDestinationChange}
-        />
-      </SettingsCard>
-    </SettingsSection>
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title={t("settings.layout.fileOpen.title")}>
+        <SettingsCard>
+          <FileOpenModifierRow
+            setting="commandClickFileOpenAction"
+            value={settings.commandClickFileOpenAction}
+            onValueChange={handleFileOpenModifierChange}
+          />
+          <FileOpenModifierRow
+            setting="optionClickFileOpenAction"
+            value={settings.optionClickFileOpenAction}
+            onValueChange={handleFileOpenModifierChange}
+          />
+        </SettingsCard>
+      </SettingsSection>
+    </>
   );
 }

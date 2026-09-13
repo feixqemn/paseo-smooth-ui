@@ -10,6 +10,7 @@ import type {
 import type { TerminalClipboardWriter } from "../terminal/native-renderer/terminal-selection";
 import type { PendingTerminalModifiers } from "../utils/terminal-keys";
 import type { TerminalRendererReadyChange } from "../utils/terminal-renderer-readiness";
+import type { FileOpenModifiers } from "@/workspace/file-open";
 
 export interface TerminalEmulatorHandle {
   writeOutput: (data: TerminalOutputData) => void;
@@ -62,7 +63,7 @@ export interface TerminalEmulatorProps {
   ) => Promise<TerminalLocalFileLinkTarget | null> | TerminalLocalFileLinkTarget | null;
   onOpenLocalFileLink?: (
     target: TerminalLocalFileLinkTarget,
-    disposition: "main" | "side",
+    modifiers: FileOpenModifiers,
   ) => Promise<void> | void;
   onRendererReadyChange?: (change: TerminalRendererReadyChange) => void;
   pendingModifiers?: PendingTerminalModifiers;

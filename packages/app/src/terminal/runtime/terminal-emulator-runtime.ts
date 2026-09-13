@@ -29,6 +29,7 @@ import {
   type TerminalLocalFileLinkTarget,
 } from "../local-links/terminal-local-link-provider";
 import { resolveTerminalFontFamily, resolveTerminalFontSize } from "./terminal-font";
+import type { FileOpenModifiers } from "@/workspace/file-open";
 
 export type TerminalOutputData = Uint8Array;
 
@@ -59,7 +60,7 @@ export interface TerminalEmulatorRuntimeCallbacks {
   ) => Promise<TerminalLocalFileLinkTarget | null> | TerminalLocalFileLinkTarget | null;
   onOpenLocalFileLink?: (
     target: TerminalLocalFileLinkTarget,
-    disposition: "main" | "side",
+    modifiers: FileOpenModifiers,
   ) => Promise<void> | void;
   onInputModeChange?: (state: TerminalInputModeState) => Promise<void> | void;
 }
@@ -262,8 +263,8 @@ export class TerminalEmulatorRuntime {
           const target = await this.callbacks.onResolveLocalFileLink?.(source);
           return target ?? null;
         },
-        openLink: (target, disposition) => {
-          void this.callbacks.onOpenLocalFileLink?.(target, disposition);
+        openLink: (target, modifiers) => {
+          void this.callbacks.onOpenLocalFileLink?.(target, modifiers);
         },
       }),
     );

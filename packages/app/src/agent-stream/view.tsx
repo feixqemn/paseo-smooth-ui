@@ -51,7 +51,6 @@ import type {
 } from "@getpaseo/protocol/agent-types";
 import type { AgentScreenAgent } from "@/hooks/use-agent-screen-state-machine";
 import { useSessionStore } from "@/stores/session-store";
-import { useRevealedText } from "@/hooks/use-revealed-text";
 import { useFileExplorerActions } from "@/hooks/use-file-explorer-actions";
 import { useLoadOlderAgentHistory } from "@/hooks/use-load-older-agent-history";
 import { useSettings } from "@/hooks/use-settings";
@@ -349,7 +348,6 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
     ref,
   ) {
     const { t } = useTranslation();
-    const autoExpandReasoning = useSettings((settings) => settings.autoExpandReasoning);
     const toolCallDetailLevel = useSettings((settings) => settings.toolCallDetailLevel);
     const chatOutlineEnabled = useSettings((settings) => settings.chatOutlineEnabled);
     const viewportRef = useRef<StreamViewportHandle | null>(null);
@@ -748,19 +746,28 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
     );
 
     const renderThoughtItem = useCallback(
-      (layoutItem: StreamLayoutItem, item: Extract<StreamItem, { kind: "thought" }>) => {
+      (_layoutItem: StreamLayoutItem, item: Extract<StreamItem, { kind: "thought" }>) => {
         return (
-          <ThoughtSlot
-            itemId={item.id}
-            onInlineDetailsExpandedChangeByItemId={setInlineDetailsExpanded}
-            text={item.text}
-            status={item.status}
-            isLastInSequence={layoutItem.isLastInToolSequence}
-            defaultExpanded={autoExpandReasoning}
-          />
+          <AssistantFileLinkResolverProvider
+            client={client}
+            serverId={resolvedServerId}
+            workspaceRoot={workspaceRoot}
+            onOpenWorkspaceFile={handleInlinePathPress}
+            toast={toast}
+          >
+            <ThoughtSlot
+              itemId={item.id}
+              text={item.text}
+              timestamp={item.timestamp.getTime()}
+              status={item.status}
+              workspaceRoot={workspaceRoot}
+              serverId={resolvedServerId}
+              client={client}
+            />
+          </AssistantFileLinkResolverProvider>
         );
       },
-      [autoExpandReasoning, setInlineDetailsExpanded],
+      [client, handleInlinePathPress, resolvedServerId, toast, workspaceRoot],
     );
 
     const renderSingleToolCallItem = useCallback(
@@ -1273,33 +1280,35 @@ interface ToolCallSlotProps extends Omit<
 
 interface ThoughtSlotProps {
   itemId: string;
-  onInlineDetailsExpandedChangeByItemId: (itemId: string, expanded: boolean) => void;
   text: string;
+  timestamp: number;
   status: Extract<StreamItem, { kind: "thought" }>["status"];
-  isLastInSequence: boolean;
-  defaultExpanded: boolean;
+  workspaceRoot?: string;
+  serverId?: string;
+  client?: DaemonClient | null;
 }
 
-// Reasoning text is paced the same way assistant text is; see @/hooks/use-revealed-text.
+// Reasoning shares the assistant markdown path so it stays selectable, file-aware,
+// and paced without borrowing the expandable tool-call presentation.
 function ThoughtSlot({
   itemId,
-  onInlineDetailsExpandedChangeByItemId,
   text,
+  timestamp,
   status,
-  isLastInSequence,
-  defaultExpanded,
+  workspaceRoot,
+  serverId,
+  client,
 }: ThoughtSlotProps) {
-  const revealedText = useRevealedText(text, status === "ready" ? "complete" : "streaming");
   return (
-    <ToolCallSlot
-      itemId={itemId}
-      onInlineDetailsExpandedChangeByItemId={onInlineDetailsExpandedChangeByItemId}
-      toolName="thinking"
-      args={revealedText}
-      status={status === "ready" ? "completed" : "executing"}
-      isLastInSequence={isLastInSequence}
-      defaultExpanded={defaultExpanded}
-      forceInline={defaultExpanded}
+    <AssistantMessage
+      occurrenceKey={`thought:${itemId}`}
+      message={text}
+      timestamp={timestamp}
+      workspaceRoot={workspaceRoot}
+      serverId={serverId}
+      client={client}
+      phase={status === "ready" ? "complete" : "streaming"}
+      variant="reasoning"
     />
   );
 }

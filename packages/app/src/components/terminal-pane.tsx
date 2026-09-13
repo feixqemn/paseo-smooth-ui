@@ -75,7 +75,8 @@ import type {
 } from "@/terminal/local-links/terminal-local-link-provider";
 import {
   normalizeWorkspaceFileLocation,
-  type OpenFileDisposition,
+  type FileOpenModifiers,
+  resolveFileOpenDisposition,
   type WorkspaceFileOpenRequest,
 } from "@/workspace/file-open";
 
@@ -916,14 +917,21 @@ export function TerminalPane({
     [client, cwd],
   );
   const handleOpenLocalFileLink = useCallback(
-    (target: TerminalLocalFileLinkTarget, disposition: OpenFileDisposition) => {
+    (target: TerminalLocalFileLinkTarget, modifiers: FileOpenModifiers) => {
+      const disposition = resolveFileOpenDisposition({
+        modifiers,
+        preferences: {
+          commandClick: settings.commandClickFileOpenAction,
+          optionClick: settings.optionClickFileOpenAction,
+        },
+      });
       const location = normalizeWorkspaceFileLocation(target);
       if (!location) {
         return;
       }
       onOpenWorkspaceFile({ location, disposition });
     },
-    [onOpenWorkspaceFile],
+    [onOpenWorkspaceFile, settings.commandClickFileOpenAction, settings.optionClickFileOpenAction],
   );
 
   const toggleModifier = useCallback(

@@ -80,6 +80,7 @@ import {
   type WorkspaceTabTarget,
 } from "@/workspace-tabs/model";
 import { useSettings } from "@/hooks/use-settings";
+import { useIsLocalDaemon } from "@/hooks/use-is-local-daemon";
 import { useKeyboardActionHandler } from "@/hooks/use-keyboard-action-handler";
 import { buildWorkspaceKeyboardHandlerId } from "@/keyboard/handler-id";
 import type {
@@ -199,6 +200,9 @@ import {
 } from "@/screens/workspace/workspace-header-menu";
 import { PluginHeaderButtons } from "@/plugins";
 import {
+  getFileOpenModifiers,
+  resolveFileOpenDisposition,
+  resolveWorkspaceFilePaths,
   createWorkspaceFileTabTarget,
   normalizeWorkspaceFileLocation,
   type WorkspaceFileLocation,
@@ -1579,6 +1583,7 @@ function WorkspaceScreenContent({
   });
 
   const client = useHostRuntimeClient(normalizedServerId);
+  const isLocalDaemon = useIsLocalDaemon(normalizedServerId);
   const isConnected = useHostRuntimeIsConnected(normalizedServerId);
   const supportsProvidersSnapshot = useSessionStore(
     (state) => state.sessions[normalizedServerId]?.serverInfo?.features?.providersSnapshot === true,
@@ -1853,6 +1858,8 @@ function WorkspaceScreenContent({
     [openTab],
   );
   const openInSidePane = useSettings((settings) => settings.openInSidePane);
+  const commandClickFileOpenAction = useSettings((settings) => settings.commandClickFileOpenAction);
+  const optionClickFileOpenAction = useSettings((settings) => settings.optionClickFileOpenAction);
   const pullRequestOpenLocation = useSettings((settings) => settings.pullRequestOpenLocation);
   const focusWorkspaceTab = useWorkspaceLayoutStore((state) => state.focusTab);
   const selectWorkspaceTabInPane = useWorkspaceLayoutStore((state) => state.selectTabInPane);
@@ -2263,6 +2270,21 @@ function WorkspaceScreenContent({
     parentTabId: string;
     focusPaneBeforeOpen?: boolean;
   }) {
+    if (request.disposition === "reveal" || request.disposition === "system") {
+      const openFile = getDesktopHost()?.opener?.openFile;
+      const paths = resolveWorkspaceFilePaths({
+        path: request.location.path,
+        workspaceRoot: workspaceDirectory ?? "",
+      });
+      if (!isLocalDaemon || !openFile || !paths) {
+        toast.error(t("settings.layout.fileOpen.unavailable"));
+        return;
+      }
+      void openFile(paths.absolutePath, request.disposition).catch((error) =>
+        toast.error(String(error instanceof Error ? error.message : error)),
+      );
+      return;
+    }
     if (focusPaneBeforeOpen && paneId && persistenceKey) {
       focusWorkspacePane(persistenceKey, paneId);
     }
@@ -3530,7 +3552,22 @@ function WorkspaceScreenContent({
             navigateToTabId(tabId);
           }
         },
-        onOpenPreferredTarget: (target, source) => {
+        onOpenPreferredTarget: (target, source, event) => {
+          const disposition = resolveFileOpenDisposition({
+            modifiers: getFileOpenModifiers(event),
+            preferences: {
+              commandClick: commandClickFileOpenAction,
+              optionClick: optionClickFileOpenAction,
+            },
+          });
+          if (target.kind === "file" && disposition !== "preferred") {
+            handleOpenWorkspaceFileFromPane({
+              request: { location: target, disposition },
+              paneId: input.paneId,
+              parentTabId: input.tab.tabId,
+            });
+            return;
+          }
           if (!persistenceKey) return;
           const tabId = openPreferredWorkspacePreview({
             isCompact: isMobile,
@@ -3589,6 +3626,8 @@ function WorkspaceScreenContent({
       handleCloseTabById,
       fileNavigationRevisionByTabId,
       handleOpenWorkspaceFileFromPane,
+      commandClickFileOpenAction,
+      optionClickFileOpenAction,
       navigateToTabId,
       normalizedServerId,
       normalizedWorkspaceId,

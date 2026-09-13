@@ -1,12 +1,18 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Pressable, Text, type StyleProp, type TextStyle } from "react-native";
+import {
+  Pressable,
+  Text,
+  type GestureResponderEvent,
+  type StyleProp,
+  type TextStyle,
+} from "react-native";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import { markdownLinkTextStyle } from "./link-children";
 
 interface MarkdownLinkTextProps {
   style: StyleProp<TextStyle>;
   dataSet?: Record<string, string>;
-  onPress(): void;
+  onPress(event: GestureResponderEvent): void;
   onHoverIn?(): void;
   children?: ReactNode;
 }

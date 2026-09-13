@@ -37,6 +37,7 @@ import {
   saveAppSettings as saveAppSettingsPure,
   type AppSettings,
   type AppSettingsUpdate,
+  type FileOpenModifierAction,
   type OpenInSidePanePreferences,
   type PullRequestOpenLocation,
   type DesktopSettingsBridge,
@@ -74,6 +75,7 @@ export {
 export type {
   AppSettings,
   AppSettingsUpdate,
+  FileOpenModifierAction,
   AppLanguage,
   OpenInSidePanePreferences,
   PullRequestOpenLocation,

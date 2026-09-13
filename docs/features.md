@@ -1,12 +1,11 @@
 # Paseo Smooth UI
 
-This document describes the small UI changes planned for the Paseo Smooth UI public track. The
-source starts from the official Paseo 0.8.0 tree. The notes describe an interaction contract;
-they do not claim that a feature is already shipped.
+A focused UI fork of official Paseo 0.8.0. These changes reuse the existing transcript,
+Markdown renderer, tool grouping, Layout preferences, and desktop opener.
 
 ## File opening
 
-File opening should be predictable without making the common path slower.
+File opening is predictable without making the common path slower.
 
 | Gesture | Configurable action | Smooth UI default |
 | --- | --- | --- |
@@ -19,13 +18,16 @@ the gesture remains stable. The regular click therefore follows the Layout prefe
 two modified clicks are deliberate escape hatches for the file manager and the system default
 application.
 
-These actions are limited to files available through the local Paseo client or a `localhost`
-file endpoint. They do not add remote file access, a new file transport, or a new permission
-model. Existing path and workspace rules remain in force.
+Modifier actions apply to chat file links, terminal file links, and Explorer file clicks.
+Finder/default-app actions require the desktop app and its local daemon. External web URLs keep
+their existing behavior. Option/Alt takes precedence if both modifier families are held.
+Each modifier offers: follow Layout, main pane, right pane, file manager, or default application.
+Existing saved Layout and tool-detail preferences are preserved; new profiles default to the right
+pane and tool overview. Choose Overview in Appearance to use adjacent tool summaries.
 
 ## Chat transcript
 
-The transcript should read as one continuous exchange:
+The transcript reads as one continuous exchange:
 
 - Reasoning is rendered inline as it arrives, without a separate `Thinking` title or a heavy
   thinking card.
@@ -35,8 +37,8 @@ The transcript should read as one continuous exchange:
   original order and remain available when expanded.
 - Reasoning and tool summaries keep their actual event order, so the compact view does not rewrite
   the conversation.
-- A lightweight gradient shimmer may run on the active streamed reasoning surface. It stops when
-  the stream settles and is purely presentational.
+- A lightweight gradient shimmer runs on the active streamed reasoning surface. It stops when
+  the stream settles and respects reduced-motion settings.
 
 Sent user messages render as Markdown after submission. The composer keeps the raw Markdown text
 so editing and copying preserve exactly what the user wrote.
@@ -47,5 +49,5 @@ This is a UI track. It does not change Pi, the Paseo daemon, provider requests, 
 serialization, or message delivery. Public examples are synthetic and contain no private
 conversation, workspace path, credential, update configuration, or signing material.
 
-Screenshots and a shipped build are pending the corresponding implementation in the private
-Paseo build.
+See [rendered examples](examples.md). The public repository contains the UI source; the full
+private Pi/daemon customization and its signed installer remain separate.

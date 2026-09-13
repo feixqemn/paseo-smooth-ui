@@ -1,6 +1,64 @@
 import { isAbsolutePath } from "@/utils/path";
 
-export type OpenFileDisposition = "main" | "preferred" | "side";
+/**
+ * A file's destination after it has been resolved against its workspace.
+ * `preferred` is deliberately kept separate from a concrete pane: it lets the
+ * caller retain the Layout preference for the source that opened the file.
+ */
+export type OpenFileDisposition = "main" | "preferred" | "side" | "reveal" | "system";
+
+/** A configurable action assigned to a file-link modifier key. */
+export type FileOpenModifierAction = "layout" | "main" | "side" | "reveal" | "system";
+
+/** The portable part of a DOM or React Native press event that affects file opening. */
+export interface FileOpenModifiers {
+  altKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+}
+
+export interface FileOpenModifierPreferences {
+  commandClick: FileOpenModifierAction;
+  optionClick: FileOpenModifierAction;
+}
+
+/**
+ * Converts a browser, React Native web, or terminal event into the small
+ * modifier payload carried across file-opening boundaries.
+ */
+export function getFileOpenModifiers(event: unknown): FileOpenModifiers {
+  const source =
+    typeof event === "object" &&
+    event !== null &&
+    typeof Reflect.get(event, "nativeEvent") === "object" &&
+    Reflect.get(event, "nativeEvent") !== null
+      ? Reflect.get(event, "nativeEvent")
+      : event;
+  const read = (key: keyof FileOpenModifiers): boolean =>
+    typeof source === "object" && source !== null && Reflect.get(source, key) === true;
+  return {
+    altKey: read("altKey"),
+    ctrlKey: read("ctrlKey"),
+    metaKey: read("metaKey"),
+  };
+}
+
+/**
+ * Resolves a click to a file disposition. Option takes precedence when both
+ * modifier families are held, so a deliberate Option action is never masked
+ * by Command/Ctrl.
+ */
+export function resolveFileOpenDisposition(input: {
+  modifiers: FileOpenModifiers;
+  preferences: FileOpenModifierPreferences;
+}): OpenFileDisposition {
+  const action = input.modifiers.altKey
+    ? input.preferences.optionClick
+    : input.modifiers.metaKey || input.modifiers.ctrlKey
+      ? input.preferences.commandClick
+      : "layout";
+  return action === "layout" ? "preferred" : action;
+}
 
 export interface WorkspaceFileLocation {
   path: string;

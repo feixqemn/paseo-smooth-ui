@@ -31,6 +31,7 @@ export interface BuildWorkspacePaneContentModelInput {
   onOpenPreferredTarget: (
     target: WorkspaceTabDescriptor["target"],
     source: OpenInSidePaneSource,
+    event?: unknown,
   ) => void;
   onOpenTargetToSide?: (target: WorkspaceTabDescriptor["target"]) => void;
   onCloseCurrentTab: () => void;

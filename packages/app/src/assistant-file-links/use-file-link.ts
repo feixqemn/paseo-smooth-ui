@@ -2,7 +2,12 @@ import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useStableEvent } from "@/hooks/use-stable-event";
-import type { OpenFileDisposition } from "@/workspace/file-open";
+import { useAppSettings } from "@/hooks/use-settings";
+import {
+  getFileOpenModifiers,
+  resolveFileOpenDisposition,
+  type OpenFileDisposition,
+} from "@/workspace/file-open";
 import { openExternalUrl } from "@/utils/open-external-url";
 import type { InlinePathTarget } from "./parse";
 import {
@@ -19,7 +24,7 @@ import {
 export interface UseFileLinkResult {
   target: InlinePathTarget | null;
   onHoverIn: () => void;
-  onPress: () => void;
+  onPress: (event?: unknown) => void;
   open: (source: AssistantFileLinkSource, disposition: OpenFileDisposition) => void;
 }
 
@@ -40,6 +45,7 @@ const DISABLED_QUERY_KEY = ["assistantFileLink", null, null, ""] as const;
 
 export function useFileLink(source: AssistantFileLinkSource): UseFileLinkResult {
   const { t } = useTranslation();
+  const { settings } = useAppSettings();
   const context = useAssistantFileLinkResolverContext();
   const queryClient = useQueryClient();
   const stableSource = useStableSource(source);
@@ -116,8 +122,17 @@ export function useFileLink(source: AssistantFileLinkSource): UseFileLinkResult 
     });
   });
 
-  const onPress = useStableEvent(() => {
-    open(stableSource, "preferred");
+  const onPress = useStableEvent((event?: unknown) => {
+    open(
+      stableSource,
+      resolveFileOpenDisposition({
+        modifiers: getFileOpenModifiers(event),
+        preferences: {
+          commandClick: settings.commandClickFileOpenAction,
+          optionClick: settings.optionClickFileOpenAction,
+        },
+      }),
+    );
   });
 
   const target = useMemo(() => {

@@ -49,6 +49,7 @@ import { useIsCompactFormFactor } from "@/constants/layout";
 import Animated, {
   Easing,
   cancelAnimation,
+  useReducedMotion,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -194,6 +195,8 @@ const WEB_TOOLCALL_SHIMMER_KEYFRAME_CSS = `
 `;
 let webToolCallShimmerRegistered = false;
 const SCROLL_EDGE_EPSILON = 0.5;
+const REASONING_SHIMMER_GRADIENT =
+  "linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.04) 33%, rgba(255, 255, 255, 0.18) 50%, rgba(255, 255, 255, 0.04) 67%, rgba(255, 255, 255, 0) 100%)";
 
 // Font size for stream metadata (timestamps, durations, live elapsed timer).
 // Lives between theme.fontSize.sm (12) and theme.fontSize.base (14); no token.
@@ -540,9 +543,12 @@ export const UserMessage = memo(function UserMessage({
             </View>
           ) : null}
           {hasText ? (
-            <Text selectable style={userMessageStylesheet.text}>
-              {message}
-            </Text>
+            <MarkdownRenderer
+              text={message}
+              compact
+              enableHtmlish={false}
+              allowedImageHandlers={MARKDOWN_ALLOWED_IMAGE_HANDLERS}
+            />
           ) : null}
         </View>
         {hasText ? (
@@ -754,6 +760,7 @@ interface AssistantMessageProps {
   client?: DaemonClient | null;
   spacing?: "default" | "compactTop" | "compactBottom" | "compactBoth";
   phase: MarkdownPhase;
+  variant?: "default" | "reasoning";
 }
 
 export const assistantMessageStylesheet = StyleSheet.create((theme) => ({
@@ -766,6 +773,19 @@ export const assistantMessageStylesheet = StyleSheet.create((theme) => ({
   },
   containerCompactBottom: {
     paddingBottom: 0,
+  },
+  reasoningContainer: {
+    position: "relative",
+    overflow: "hidden",
+    paddingVertical: theme.spacing[1],
+    opacity: 0.78,
+  },
+  reasoningShimmer: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   cappedNotice: {
     marginTop: theme.spacing[3],
@@ -1498,8 +1518,10 @@ export const AssistantMessage = memo(function AssistantMessage({
   client,
   spacing = "default",
   phase,
+  variant = "default",
 }: AssistantMessageProps) {
   const { t } = useTranslation();
+  const prefersReducedMotion = useReducedMotion();
   const markdownParser = useMemo(createAssistantMarkdownParser, []);
   const renderedMessage = useMemo(() => capAssistantMessageForRender(message), [message]);
   // Paint a paced prefix while the turn is streaming so text arrives at a steady
@@ -1960,8 +1982,33 @@ export const AssistantMessage = memo(function AssistantMessage({
         assistantMessageStylesheet.containerCompactTop,
       (spacing === "compactBottom" || spacing === "compactBoth") &&
         assistantMessageStylesheet.containerCompactBottom,
+      variant === "reasoning" && assistantMessageStylesheet.reasoningContainer,
     ],
-    [spacing],
+    [spacing, variant],
+  );
+  const shouldShowReasoningShimmer =
+    variant === "reasoning" && phase === "streaming" && isWeb && !prefersReducedMotion;
+  useEffect(() => {
+    if (shouldShowReasoningShimmer) {
+      ensureWebToolCallShimmerKeyframes();
+    }
+  }, [shouldShowReasoningShimmer]);
+  const reasoningShimmerStyle = useMemo(
+    () =>
+      shouldShowReasoningShimmer
+        ? [
+            assistantMessageStylesheet.reasoningShimmer,
+            inlineUnistylesStyle({
+              backgroundImage: REASONING_SHIMMER_GRADIENT,
+              backgroundSize: "160px 100%",
+              backgroundRepeat: "no-repeat",
+              animation: `${WEB_TOOLCALL_SHIMMER_ANIMATION_NAME} 2.2s linear infinite`,
+              "--paseo-shimmer-start": "-160px",
+              "--paseo-shimmer-end": "calc(100% + 160px)",
+            }),
+          ]
+        : null,
+    [shouldShowReasoningShimmer],
   );
   const revealDataSet = useMemo(
     () =>
@@ -1994,6 +2041,9 @@ export const AssistantMessage = memo(function AssistantMessage({
         >
           {t("agentStream.messageCapped", { bytes: fullMessageByteLength })}
         </Text>
+      ) : null}
+      {reasoningShimmerStyle ? (
+        <View pointerEvents="none" style={reasoningShimmerStyle as never} />
       ) : null}
     </View>
   );

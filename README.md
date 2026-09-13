@@ -2,7 +2,7 @@
   <img src="packages/website/public/logo.svg" width="64" height="64" alt="Paseo logo">
 </p>
 
-<h1 align="center">Paseo</h1>
+<h1 align="center">Paseo Smooth UI</h1>
 
 <p align="center">
   <a href="README.md">English</a> ·
@@ -37,10 +37,15 @@ Paseo Smooth UI is a public design track for a calmer Paseo desktop surface. It 
 official Paseo 0.8.0 foundation and focuses on small, direct UI changes: predictable file
 opening, a compact reasoning and tool timeline, and Markdown that reads like Markdown.
 
-The work is planned and coming. Read the [feature notes](docs/features.md) for the intended
-interaction contract and [public examples](docs/examples.md) for synthetic transcript content.
-This track is UI-only: it does not add Pi or daemon behavior, and file-opening actions apply to
-local or `localhost` files only.
+Read the [features](docs/features.md) and [actual rendered examples](docs/examples.md).
+This independent fork preserves the Apache-2.0 license and upstream attribution. It changes the
+UI and desktop file opener; it does not change Pi or daemon message delivery.
+
+![Continuous reasoning and compact tools](docs/images/reasoning-tools.png)
+
+The source is ready to build using the upstream instructions below. No prebuilt public installer
+is published with this initial source release. Existing profiles retain their saved preferences:
+select **Overview** in Appearance and your desired destinations in **Layout**.
 
 <p align="center">
   <img src="https://paseo.sh/hero-mockup.png" alt="Paseo app screenshot" width="100%">

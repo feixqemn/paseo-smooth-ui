@@ -61,6 +61,7 @@ export interface DesktopNotificationBridge {
 }
 
 export interface DesktopOpenerBridge {
+  openFile?: (path: string, action: "reveal" | "system") => Promise<void>;
   openUrl?: (url: string) => Promise<void>;
 }
 

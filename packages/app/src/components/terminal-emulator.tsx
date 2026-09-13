@@ -39,6 +39,7 @@ import {
   prepareDroppedPathsForTerminal,
 } from "../terminal/drop/terminal-file-drop";
 import { getDesktopHost } from "@/desktop/host";
+import type { FileOpenModifiers } from "@/workspace/file-open";
 
 export interface TerminalEmulatorHandle {
   writeOutput: (data: TerminalOutputData) => void;
@@ -134,7 +135,7 @@ interface TerminalEmulatorProps {
   ) => Promise<TerminalLocalFileLinkTarget | null> | TerminalLocalFileLinkTarget | null;
   onOpenLocalFileLink?: (
     target: TerminalLocalFileLinkTarget,
-    disposition: "main" | "side",
+    modifiers: FileOpenModifiers,
   ) => Promise<void> | void;
   onRendererReadyChange?: (change: TerminalRendererReadyChange) => void;
   pendingModifiers?: PendingTerminalModifiers;

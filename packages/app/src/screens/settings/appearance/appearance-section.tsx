@@ -226,23 +226,6 @@ function ThemeRow({
   );
 }
 
-interface AutoExpandReasoningRowProps {
-  value: boolean;
-  onChange: (value: boolean) => void;
-}
-
-function AutoExpandReasoningRow({ value, onChange }: AutoExpandReasoningRowProps) {
-  const { t } = useTranslation();
-  return (
-    <SettingsSwitch
-      label={t("settings.general.autoExpandReasoning.label")}
-      hint={t("settings.general.autoExpandReasoning.description")}
-      value={value}
-      onValueChange={onChange}
-    />
-  );
-}
-
 interface ChatOutlineRowProps {
   value: boolean;
   onChange: (value: boolean) => void;
@@ -556,13 +539,6 @@ export function AppearanceSection() {
     [updateSettings],
   );
 
-  const handleAutoExpandReasoningChange = useCallback(
-    (autoExpandReasoning: boolean) => {
-      void updateSettings({ autoExpandReasoning });
-    },
-    [updateSettings],
-  );
-
   const handleToolCallDetailLevelChange = useCallback(
     (toolCallDetailLevel: AppSettings["toolCallDetailLevel"]) => {
       void updateSettings({ toolCallDetailLevel });
@@ -682,10 +658,6 @@ export function AppearanceSection() {
       </SettingsSection>
       <SettingsSection title={t("settings.appearance.detailLevel.title")}>
         <SettingsCard>
-          <AutoExpandReasoningRow
-            value={settings.autoExpandReasoning}
-            onChange={handleAutoExpandReasoningChange}
-          />
           <ToolCallDetailRow
             value={settings.toolCallDetailLevel}
             onChange={handleToolCallDetailLevelChange}

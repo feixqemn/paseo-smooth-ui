@@ -1971,6 +1971,19 @@ export const en = {
           },
         },
       },
+      fileOpen: {
+        unavailable: "File manager and default-app actions require a local desktop workspace.",
+        title: "Modifier-click file opening",
+        commandClickFileOpenAction: "Command/Ctrl-click",
+        optionClickFileOpenAction: "Option/Alt-click",
+        actions: {
+          layout: "Follow open location",
+          main: "Main panel",
+          side: "On the side",
+          reveal: "Reveal in Finder",
+          system: "Open with default app",
+        },
+      },
     },
     editor: {
       title: "Editor",

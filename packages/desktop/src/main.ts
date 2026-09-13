@@ -964,6 +964,21 @@ async function bootstrap(): Promise<void> {
   registerNotificationHandlers();
   const openExternalUrl = createExternalUrlOpener({ open: shell.openExternal });
   ipcMain.handle("paseo:opener:openUrl", (_event, value: unknown) => openExternalUrl(value));
+  ipcMain.handle("paseo:opener:openFile", async (_event, filePath: unknown, action: unknown) => {
+    if (
+      typeof filePath !== "string" ||
+      !path.isAbsolute(filePath) ||
+      (action !== "reveal" && action !== "system")
+    ) {
+      throw new Error("Invalid file open request");
+    }
+    if (action === "reveal") {
+      shell.showItemInFolder(filePath);
+    } else {
+      const error = await shell.openPath(filePath);
+      if (error) throw new Error(error);
+    }
+  });
   registerEditorTargetHandlers();
   registerBrowserAutomationIpc();
 

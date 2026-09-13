@@ -1,3 +1,4 @@
+import type { FileOpenModifiers } from "@/workspace/file-open";
 import {
   useCallback,
   useEffect,
@@ -97,7 +98,7 @@ type BridgeOutboundMessage =
       type: "openLocalFileLink";
       streamKey: string;
       target: TerminalLocalFileLinkTarget;
-      disposition: "main" | "side";
+      modifiers: FileOpenModifiers;
     }
   | { type: "swipeLeft"; streamKey: string }
   | { type: "swipeRight"; streamKey: string }
@@ -496,7 +497,7 @@ export default function WebViewTerminalEmulator({
         return;
       }
       if (message.type === "openLocalFileLink") {
-        callbacksRef.current.onOpenLocalFileLink?.(message.target, message.disposition);
+        callbacksRef.current.onOpenLocalFileLink?.(message.target, message.modifiers);
         return;
       }
       switch (message.type) {

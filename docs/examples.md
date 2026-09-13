@@ -1,69 +1,43 @@
-# Public examples
+# Rendered examples
 
-The examples below are synthetic fixtures for reviewing the intended transcript presentation.
-They are not copied from a real conversation and do not represent a successful run or a product
-screenshot.
+These are actual captures of the modified Paseo renderer using an isolated local mock provider.
+All conversation text and tool activity are synthetic. They illustrate presentation, not completed
+coding work. No real user conversation is included.
 
-## Markdown message
+## Sent Markdown
 
-### Review result
+Headings, emphasis, lists, quotes and code blocks render after sending. The composer and copy action
+keep the Markdown source.
 
-The change is ready for review.
+![Sent Markdown message](images/markdown-message.png)
 
-- The request path keeps its existing API.
-- The loading state now has one visible transition.
-- The empty state explains what to do next.
+## Reasoning and adjacent tools
 
-> This block is part of the example message and should remain visually distinct.
+Reasoning stays visible without a Thinking header or card. Adjacent tool calls share an expandable
+summary, between the surrounding text in chronological order.
+
+![Reasoning and adjacent tool summary](images/reasoning-tools.png)
+
+## Try it
+
+Paste this into the composer and send it:
+
+````markdown
+## Readable by design
+
+**Keep the conversation flowing.**
+
+- Render Markdown after sending.
+- Show reasoning without a separate card.
+- Group adjacent tools, keeping their order.
+
+> Less chrome. More room for the work.
 
 ```ts
-export function describeState(state: "idle" | "working" | "done") {
-  return state === "done" ? "Ready" : "In progress";
-}
+const destination = modifiers.alt ? "default app" : "right pane";
 ```
+````
 
-## Continuous reasoning with adjacent tools
-
-The compact transcript can show a continuous reasoning passage followed by one adjacent tool
-summary:
-
-> I found the existing layout preference and will reuse it for the normal click. The modified
-> click actions can stay local to the file-link handler, so no new transport is needed.
-
-**2 tools · completed**
-
-<details>
-<summary>Show tool activity</summary>
-
-1. `read_file` — inspected the layout preference
-2. `search` — located the file-link handler
-
-</details>
-
-The expanded row preserves the event order and the original tool details. The `Thinking` label is
-not part of this presentation.
-
-## Composer fixture
-
-The composer keeps this raw text until the user sends it:
-
-```markdown
-## Ship checklist
-
-- [ ] Review the diff
-- [ ] Run the local build
-```
-
-After sending, it is rendered as Markdown in the transcript. This is a public fixture only; no
-real user content or screenshot is included here.
-
-## File-opening fixture
-
-For a local file link such as `localhost:/workspace/README.md`:
-
-- Click follows Layout and opens in the right pane by default.
-- Command-click / Ctrl-click opens Finder or the platform file manager by default.
-- Option-click / Alt-click opens with the system default application by default.
-
-The fixture deliberately uses a `localhost` path. Public examples do not describe or expose
-remote file actions.
+In a local desktop workspace, click a file link such as `[README](README.md)` in an assistant message:
+normal click follows Layout, Command/Ctrl locates it in the file manager, and Option/Alt opens it
+with the system default application. The mappings are configurable in Settings → Layout.

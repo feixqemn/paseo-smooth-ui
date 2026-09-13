@@ -110,7 +110,7 @@ interface TreeRowItemProps {
   isExpanded: boolean;
   isSelected: boolean;
   loading: boolean;
-  onEntryPress: (entry: ExplorerEntry) => void;
+  onEntryPress: (entry: ExplorerEntry, event?: unknown) => void;
   onSelectEntry: (entry: ExplorerEntry) => void;
   onCopyPath: (path: string) => void;
   onCopyRelativePath: (path: string) => void;
@@ -265,13 +265,16 @@ function TreeRowItem({
     path: entry.path,
   });
 
-  const handlePress = useCallback(() => {
-    const selection = isWeb ? window.getSelection() : null;
-    if (selection && !selection.isCollapsed && selection.toString().length > 0) {
-      return;
-    }
-    onEntryPress(entry);
-  }, [onEntryPress, entry]);
+  const handlePress = useCallback(
+    (event?: unknown) => {
+      const selection = isWeb ? window.getSelection() : null;
+      if (selection && !selection.isCollapsed && selection.toString().length > 0) {
+        return;
+      }
+      onEntryPress(entry, event);
+    },
+    [onEntryPress, entry],
+  );
 
   const handleSelect = useCallback(() => {
     onSelectEntry(entry);
@@ -400,7 +403,7 @@ interface FileExplorerPaneProps {
   serverId: string;
   workspaceId?: string | null;
   workspaceRoot: string;
-  onOpenFile?: (filePath: string) => void;
+  onOpenFile?: (filePath: string, event?: unknown) => void;
   onOpenFileToSide?: (filePath: string) => void;
   onAddToChat?: (path: string) => void;
 }
@@ -551,23 +554,23 @@ export function FileExplorerPane({
   );
 
   const handleOpenFile = useCallback(
-    (entry: ExplorerEntry) => {
+    (entry: ExplorerEntry, event?: unknown) => {
       if (!hasWorkspaceScope) {
         return;
       }
-      onOpenFile?.(entry.path);
+      onOpenFile?.(entry.path, event);
     },
     [hasWorkspaceScope, onOpenFile],
   );
 
   const handleEntryPress = useCallback(
-    (entry: ExplorerEntry) => {
+    (entry: ExplorerEntry, event?: unknown) => {
       handleSelectEntry(entry);
       if (entry.kind === "directory") {
         handleToggleDirectory(entry);
         return;
       }
-      handleOpenFile(entry);
+      handleOpenFile(entry, event);
     },
     [handleOpenFile, handleSelectEntry, handleToggleDirectory],
   );
@@ -1468,7 +1471,7 @@ function TreeRowDispatcher({
   expandedPaths: Set<string>;
   selectedEntryPath: string | null;
   isDirectoryLoading: (path: string) => boolean;
-  onEntryPress: (entry: ExplorerEntry) => void;
+  onEntryPress: (entry: ExplorerEntry, event?: unknown) => void;
   onSelectEntry: (entry: ExplorerEntry) => void;
   onCopyPath: (path: string) => void | Promise<void>;
   onCopyRelativePath: (path: string) => void | Promise<void>;

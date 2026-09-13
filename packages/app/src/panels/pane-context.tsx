@@ -15,7 +15,11 @@ export interface PaneContextValue {
   state?: JsonValue;
   fileNavigationRevision?: number;
   openTab: (target: WorkspaceTabTarget) => void;
-  openPreferredTarget: (target: WorkspaceTabTarget, source: OpenInSidePaneSource) => void;
+  openPreferredTarget: (
+    target: WorkspaceTabTarget,
+    source: OpenInSidePaneSource,
+    event?: unknown,
+  ) => void;
   openTargetToSide?: (target: WorkspaceTabTarget) => void;
   closeCurrentTab: () => void;
   retargetCurrentTab: (target: WorkspaceTabTarget) => void;

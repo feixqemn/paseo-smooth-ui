@@ -1,3 +1,4 @@
+import type { FileOpenModifiers } from "@/workspace/file-open";
 import type { ITheme } from "@xterm/xterm";
 import xtermCss from "@xterm/xterm/css/xterm.css";
 import type { TerminalState } from "@getpaseo/protocol/messages";
@@ -80,7 +81,7 @@ type OutboundMessage =
       type: "openLocalFileLink";
       streamKey: string;
       target: TerminalLocalFileLinkTarget;
-      disposition: "main" | "side";
+      modifiers: FileOpenModifiers;
     }
   | { type: "swipeLeft"; streamKey: string }
   | { type: "swipeRight"; streamKey: string }
@@ -325,12 +326,12 @@ class TerminalWebViewBridge {
         onOpenExternalUrl: (url) =>
           sendToNative({ type: "openExternalUrl", streamKey: message.streamKey, url }),
         onResolveLocalFileLink: (source) => this.requestLocalFileLinkResolution(source),
-        onOpenLocalFileLink: (target, disposition) =>
+        onOpenLocalFileLink: (target, modifiers) =>
           sendToNative({
             type: "openLocalFileLink",
             streamKey: message.streamKey,
             target,
-            disposition,
+            modifiers,
           }),
       },
     });
