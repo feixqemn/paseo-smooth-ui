@@ -14,7 +14,8 @@ keep the Markdown source.
 ## Reasoning and adjacent tools
 
 Reasoning and adjacent tools collapse into a single summary. Expand it to see the Markdown
-reasoning and individual tool calls in chronological order; normal replies stay outside.
+reasoning rows and individual tool calls in chronological order; normal replies stay outside.
+Reasoning has a cloud icon and the same spacing as tools. Click its row to read the provider details.
 
 ![Collapsed activity summary](images/activity-collapsed.png)
 
@@ -43,3 +44,14 @@ const destination = modifiers.alt ? "default app" : "right pane";
 In a local desktop workspace, click a file link such as `[README](README.md)` in an assistant message:
 normal click follows Layout, Command/Ctrl locates it in the file manager, and Option/Alt opens it
 with the system default application. The mappings are configurable in Settings → Layout.
+
+## Chinese emphasis
+
+These also render as bold in sent messages and assistant replies:
+
+```markdown
+这是**中文。**后续说明。
+这段文字： **内容清晰。 **接着继续正文。
+```
+
+The source and code spans remain unchanged when copied.
