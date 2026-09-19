@@ -1959,6 +1959,22 @@ export class AgentManager {
     this.emitState(agent, { persist: false });
   }
 
+  async setTitleIfCurrent(agentId: string, expectedTitle: string, title: string): Promise<boolean> {
+    return this.runLifecycleMutation(agentId, async () => {
+      const registry = this.requireRegistry();
+      const record = await registry.get(agentId);
+      if (!record || record.title !== expectedTitle) {
+        return false;
+      }
+      if (this.getAgent(agentId)) {
+        await this.setTitle(agentId, title);
+      } else {
+        await this.writeStoredMetadata(agentId, { title });
+      }
+      return true;
+    });
+  }
+
   async setLabels(agentId: string, labels: Record<string, string>): Promise<void> {
     await this.runLifecycleMutation(agentId, async () => {
       const agent = this.requireAgent(agentId);

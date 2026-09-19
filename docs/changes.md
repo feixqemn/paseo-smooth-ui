@@ -3,6 +3,25 @@
 This records shipped behavior and the source locations needed for later changes. PR states below
 are frozen at the original review date, not a claim about today's upstream state.
 
+## 2026-09-19 — workspace and agent naming (source update)
+
+- Click the new-workspace heading to choose its name with the existing rename dialog.
+  The name travels through `createWorkspace.title`; chat, terminal and empty workspaces
+  use the same creation path. Older daemons use the existing workspace rename request.
+- Newly created interactive agents with an initial prompt get a concise topic title in
+  the prompt's language. The daemon reuses its structured metadata generator in the
+  background; the initial prompt is sent immediately. Explicit/manual titles remain
+  intact, and a failed generation leaves the provisional title in place.
+- Source owners: `packages/app/src/screens/new-workspace-screen.tsx`,
+  `packages/server/src/server/agent/create-agent-title.ts`, `agent/agent-manager.ts`,
+  `agent/create-agent/create.ts`, `session.ts`, and
+  `session/checkout/git-metadata-generator.ts` (server paths relative to
+  `packages/server/src/server/`).
+
+This source update does not publish a new installer. The release identities below
+describe the existing downloads. The same naming changes are carried in the local
+private 0.9.0-beta.2 source without changing this public repository's 0.8.0 baseline.
+
 ## Build identities
 
 | Track | Version | Base | Included changes |

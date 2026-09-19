@@ -20,6 +20,7 @@ import {
 import { HostStatusDot } from "@/components/host-status-dot";
 import { HostPicker } from "@/components/hosts/host-picker";
 import { ProjectIconView } from "@/components/project-icon-view";
+import { AdaptiveRenameModal } from "@/components/rename-modal";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
 import type { ComboboxOption as ComboboxOptionType, ComboboxProps } from "@/components/ui/combobox";
 import { ComboboxTrigger } from "@/components/ui/combobox-trigger";
@@ -797,6 +798,7 @@ interface WorkspaceDraftSubmissionConfig {
 }
 
 async function createAndMergeWorkspace(input: {
+  title?: string;
   client: NonNullable<ReturnType<typeof useHostRuntimeClient>>;
   createInput: Parameters<
     NonNullable<ReturnType<typeof useHostRuntimeClient>>["createPaseoWorktree"]
@@ -812,7 +814,13 @@ async function createAndMergeWorkspace(input: {
   if (payload.error || !payload.workspace) {
     throw new Error(payload.error ?? input.createFailedMessage);
   }
-  const normalizedWorkspace = normalizeWorkspaceDescriptor(payload.workspace);
+  if (input.title) {
+    await input.client.setWorkspaceTitle(payload.workspace.id, input.title);
+  }
+  const normalizedWorkspace = normalizeWorkspaceDescriptor({
+    ...payload.workspace,
+    ...(input.title ? { title: input.title } : {}),
+  });
   const workspaceForInitialMerge = input.createInput.firstAgentContext
     ? { ...normalizedWorkspace, status: "running" as const, statusEnteredAt: new Date() }
     : normalizedWorkspace;
@@ -821,6 +829,7 @@ async function createAndMergeWorkspace(input: {
 }
 
 async function createMultiplicityWorkspace(input: {
+  title?: string;
   client: NonNullable<ReturnType<typeof useHostRuntimeClient>>;
   isolation: "local" | "worktree";
   project: HostProjectListItem;
@@ -844,6 +853,7 @@ async function createMultiplicityWorkspace(input: {
     attachments: input.attachments,
   });
   const payload = await input.client.createWorkspace({
+    title: input.title,
     source: isWorktree
       ? {
           kind: "worktree",
@@ -1635,6 +1645,8 @@ export function NewWorkspaceScreen({
   const supportsWorkspaceMultiplicity = useHostFeature(selectedServerId, "workspaceMultiplicity");
   const supportsForgeSearch = useHostFeature(selectedServerId, "forgeSearch");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [workspaceTitle, setWorkspaceTitle] = useState("");
+  const [renameTitleOpen, setRenameTitleOpen] = useState(false);
   const [createdWorkspace, setCreatedWorkspace] = useState<ReturnType<
     typeof normalizeWorkspaceDescriptor
   > | null>(null);
@@ -2058,6 +2070,7 @@ export function NewWorkspaceScreen({
         : undefined;
       const normalizedWorkspace = supportsWorkspaceMultiplicity
         ? await createMultiplicityWorkspace({
+            title: workspaceTitle || undefined,
             client: connectedClient,
             isolation: effectiveIsolation,
             project: selectedProject,
@@ -2071,6 +2084,7 @@ export function NewWorkspaceScreen({
             createFailedMessage: t("newWorkspace.errors.createWorktreeFailed"),
           })
         : await createAndMergeWorkspace({
+            title: workspaceTitle || undefined,
             client: connectedClient,
             createInput: buildCreateWorktreeInput({ ...input, checkoutRequest }),
             mergeWorkspaces,
@@ -2093,6 +2107,7 @@ export function NewWorkspaceScreen({
       supportsWorkspaceMultiplicity,
       t,
       withConnectedClient,
+      workspaceTitle,
     ],
   );
 
@@ -2374,7 +2389,15 @@ export function NewWorkspaceScreen({
         <TitlebarDragRegion />
         <KeyboardTranslateView style={animatedStaticStyles.centered}>
           <View style={styles.composerTitleContainer}>
-            <Text style={styles.composerTitle}>{t("newWorkspace.title")}</Text>
+            <Pressable
+              onPress={() => setRenameTitleOpen(true)}
+              disabled={isPending}
+              accessibilityRole="button"
+              accessibilityLabel={t("sidebar.workspace.rename.title")}
+              testID="new-workspace-rename"
+            >
+              <Text style={styles.composerTitle}>{workspaceTitle || t("newWorkspace.title")}</Text>
+            </Pressable>
           </View>
           {formStack}
           {isTerminalLaunch ? (
@@ -2440,6 +2463,16 @@ export function NewWorkspaceScreen({
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         </KeyboardTranslateView>
       </View>
+      <AdaptiveRenameModal
+        visible={renameTitleOpen}
+        title={t("sidebar.workspace.rename.title")}
+        initialValue={workspaceTitle}
+        placeholder={t("newWorkspace.title")}
+        submitLabel={t("sidebar.workspace.rename.submit")}
+        onClose={() => setRenameTitleOpen(false)}
+        onSubmit={(value) => setWorkspaceTitle(value.trim())}
+        testID="new-workspace-rename-modal"
+      />
     </FileDropZone>
   );
 }

@@ -49,6 +49,7 @@ import {
   unarchiveAgentState,
 } from "./agent/agent-prompt.js";
 import {
+  generateAgentTitle,
   resolveCreateAgentTitles,
   resolveFirstAgentPromptTitle,
 } from "./agent/create-agent-title.js";
@@ -174,6 +175,7 @@ import {
   createAgentStructuredTextGeneration,
   createGitMetadataGenerator,
 } from "./session/checkout/git-metadata-generator.js";
+import type { StructuredTextGeneration } from "./session/checkout/git-metadata-generator.js";
 import { ScheduleSession } from "./session/schedule/schedule-session.js";
 import { ProviderCatalogSession } from "./session/provider/provider-catalog-session.js";
 import { WorkspaceFilesSession } from "./session/files/workspace-files-session.js";
@@ -746,6 +748,7 @@ export class Session {
   private readonly workspaceDirectory: WorkspaceDirectory;
   private readonly voiceSession: VoiceSession;
   private readonly checkoutSession: CheckoutSession;
+  private readonly agentTitleGeneration: StructuredTextGeneration;
   private readonly scheduleSession: ScheduleSession;
   private readonly providerCatalogSession: ProviderCatalogSession;
   private readonly workspaceFilesSession: WorkspaceFilesSession;
@@ -882,6 +885,12 @@ export class Session {
         await this.workspaceProvisioning.ensureWorkspaceRecordUnarchived(workspace);
       },
     });
+    this.agentTitleGeneration = createAgentStructuredTextGeneration({
+      agentManager: this.agentManager,
+      providerSnapshotManager,
+      readDaemonConfig: () => this.readStructuredGenerationDaemonConfig(),
+      getFocusedSelection: (cwd) => this.getFocusedAgentSelectionForCwd(cwd),
+    });
     this.checkoutSession = new CheckoutSession({
       host: {
         emit: (msg) => this.emit(msg),
@@ -896,12 +905,7 @@ export class Session {
       checkoutDiffManager,
       gitMetadataGenerator: createGitMetadataGenerator({
         workspaceGitService: this.workspaceGitService,
-        generation: createAgentStructuredTextGeneration({
-          agentManager: this.agentManager,
-          providerSnapshotManager,
-          readDaemonConfig: () => this.readStructuredGenerationDaemonConfig(),
-          getFocusedSelection: (cwd) => this.getFocusedAgentSelectionForCwd(cwd),
-        }),
+        generation: this.agentTitleGeneration,
       }),
       paseoHome: this.paseoHome,
       worktreesRoot: this.worktreesRoot,
@@ -3697,6 +3701,23 @@ export class Session {
         },
         {
           kind: "session",
+          onAgentReady: async (agent) => {
+            createdAgentId = agent.id;
+            if (!msg.callerAgentId && trimmedPrompt && !resolvedIntent.config.title?.trim()) {
+              this.scheduleAgentTitleGeneration({
+                agentId: agent.id,
+                cwd: agent.cwd,
+                firstAgentContext,
+                provisionalTitle,
+                currentSelection: {
+                  provider: agent.provider,
+                  model: agent.runtimeInfo?.model ?? agent.config.model ?? null,
+                  thinkingOptionId:
+                    agent.runtimeInfo?.thinkingOptionId ?? agent.config.thinkingOptionId ?? null,
+                },
+              });
+            }
+          },
           agentId,
           config: resolvedIntent.config,
           workspaceId: resolvedIntent.intent.workspaceId,
@@ -3744,6 +3765,42 @@ export class Session {
       });
       throw error;
     }
+  }
+
+  private scheduleAgentTitleGeneration(options: {
+    agentId: string;
+    cwd: string;
+    firstAgentContext: FirstAgentContext;
+    provisionalTitle: string | null;
+    currentSelection: {
+      provider: string;
+      model: string | null;
+      thinkingOptionId: string | null;
+    };
+  }): void {
+    const provisionalTitle = options.provisionalTitle;
+    if (!provisionalTitle) {
+      return;
+    }
+
+    void generateAgentTitle({
+      generation: this.agentTitleGeneration,
+      cwd: options.cwd,
+      firstAgentContext: options.firstAgentContext,
+      currentSelection: options.currentSelection,
+    })
+      .then(async (title) => {
+        if (!title) {
+          return;
+        }
+        await this.agentManager.setTitleIfCurrent(options.agentId, provisionalTitle, title);
+      })
+      .catch((error: unknown) => {
+        this.sessionLogger.warn(
+          { err: error, agentId: options.agentId },
+          "Failed to generate agent title",
+        );
+      });
   }
 
   private async resolveSessionCreateAgentIntent(input: {
