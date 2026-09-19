@@ -5,7 +5,7 @@ are frozen at the original review date, not a claim about today's upstream state
 
 ## 2026-09-19 — workspace and agent naming (source update)
 
-- Click the new-workspace heading to choose its name with the existing rename dialog.
+- Click the new-workspace heading to edit its name directly in place.
   The name travels through `createWorkspace.title`; chat, terminal and empty workspaces
   use the same creation path. Older daemons use the existing workspace rename request.
 - Newly created interactive agents with an initial prompt get a concise topic title in
@@ -21,6 +21,15 @@ are frozen at the original review date, not a claim about today's upstream state
 This source update does not publish a new installer. The release identities below
 describe the existing downloads. The same naming changes are carried in the local
 private 0.9.0-beta.2 source without changing this public repository's 0.8.0 baseline.
+
+### Inline rename follow-up
+
+All rename actions edit the displayed name in place: workspace rows/header,
+agent and terminal tabs, host names and project names. Enter or blur saves;
+Escape cancels. Existing rename APIs and menu/keyboard entrypoints are retained.
+Project icon editing stays separate; clearing a custom project name restores its
+automatic name. File/folder renaming was already inline. Shared input behavior
+lives in `packages/app/src/components/inline-rename-input.tsx`.
 
 ## Build identities
 

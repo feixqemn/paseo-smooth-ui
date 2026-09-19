@@ -1,5 +1,8 @@
 import { memo, useMemo, useCallback, useState, type ReactNode } from "react";
 import { Text, View, type ViewStyle } from "react-native";
+import { useTranslation } from "react-i18next";
+import { InlineRenameInput } from "@/components/inline-rename-input";
+import type { WorkspaceRenameController } from "@/hooks/use-workspace-rename";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { CircleAlert, Folder, FolderGit2, Monitor } from "lucide-react-native";
 import { ProjectStatusIndicator } from "@/components/sidebar/project-leading-visual";
@@ -44,10 +47,12 @@ const ThemedFolderGit2 = withUnistyles(FolderGit2);
 export function SidebarWorkspaceRowFrame({
   workspace,
   isDragging = false,
+  isRenaming = false,
   children,
 }: {
   workspace: SidebarWorkspaceEntry;
   isDragging?: boolean;
+  isRenaming?: boolean;
   children: (input: {
     isHovered: boolean;
     contextMenuOpen: boolean;
@@ -75,7 +80,7 @@ export function SidebarWorkspaceRowFrame({
       workspace={workspace}
       prHint={workspace.prHint}
       isDragging={isDragging}
-      disabled={contextMenuOpen}
+      disabled={contextMenuOpen || isRenaming}
     >
       {children({
         isHovered: isHovered && !contextMenuOpen && !isDragging,
@@ -100,6 +105,7 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   shortcutNumber = null,
   showShortcutBadge = false,
   reserveIdleStatusIndicatorSpace = true,
+  rename,
   children,
 }: {
   workspace: SidebarWorkspaceEntry;
@@ -117,8 +123,10 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   showShortcutBadge?: boolean;
   /** Keep the empty leading slot when the workspace has no active status. */
   reserveIdleStatusIndicatorSpace?: boolean;
+  rename?: WorkspaceRenameController;
   children?: ReactNode;
 }) {
+  const { t } = useTranslation();
   const {
     settings: { workspaceTitleSource },
   } = useAppSettings();
@@ -158,9 +166,21 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
         )}
         <View style={styles.workspaceContentColumn}>
           <View style={styles.workspaceTitleRow}>
-            <Text style={workspaceBranchTextStyle} numberOfLines={1}>
-              {workspaceLabel}
-            </Text>
+            {rename?.isRenaming ? (
+              <InlineRenameInput
+                initialValue={rename.initialValue}
+                onSubmit={rename.submit}
+                onCancel={rename.cancel}
+                style={workspaceBranchTextStyle}
+                accessibilityLabel={t("sidebar.workspace.rename.title")}
+                testID={`sidebar-workspace-rename-input-${workspace.workspaceKey}`}
+                allowEmpty
+              />
+            ) : (
+              <Text style={workspaceBranchTextStyle} numberOfLines={1}>
+                {workspaceLabel}
+              </Text>
+            )}
             <View style={sidebarWorkspaceRowStyles.rowRight}>{children}</View>
           </View>
           <WorkspaceMetaRow

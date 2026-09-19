@@ -286,7 +286,7 @@ export async function expectAppearanceContent(page: Page): Promise<void> {
 
 export async function expectHostLabelDisplayed(page: Page): Promise<void> {
   await expect(page.getByTestId("host-page-label-edit-button")).toBeVisible();
-  await expect(page.getByTestId("host-page-rename-modal-input")).toHaveCount(0);
+  await expect(page.getByTestId("host-page-name-input")).toHaveCount(0);
 }
 
 export async function clickEditHostLabel(page: Page): Promise<void> {
@@ -294,9 +294,9 @@ export async function clickEditHostLabel(page: Page): Promise<void> {
 }
 
 export async function expectHostLabelEditMode(page: Page, expectedLabel: string): Promise<void> {
-  await expect(page.getByTestId("host-page-rename-modal-input")).toBeVisible();
-  await expect(page.getByTestId("host-page-rename-modal-input")).toHaveValue(expectedLabel);
-  await expect(page.getByTestId("host-page-rename-modal-submit")).toBeVisible();
+  await expect(page.getByTestId("host-page-name-input")).toBeVisible();
+  await expect(page.getByTestId("host-page-name-input")).toHaveValue(expectedLabel);
+  await expect(page.getByTestId("host-page-name-input")).toBeFocused();
 }
 
 export async function expectHostConnectionsCard(page: Page, port: string): Promise<void> {

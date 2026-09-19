@@ -26,6 +26,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Switch } from "@/components/ui/switch";
 import { AdaptiveModalSheet, type SheetHeader } from "@/components/adaptive-modal-sheet";
 import { ProjectEditSheet } from "@/components/project-edit-sheet";
+import { InlineRenameInput } from "@/components/inline-rename-input";
 import { EditingTextInput as TextInput } from "@/components/ui/text-input";
 import { SettingsTextAreaCard } from "@/components/settings-textarea";
 import { SettingsGroup } from "@/components/settings/headings/settings-group";
@@ -205,6 +206,15 @@ function ProjectSettingsBody({
 }: ProjectSettingsBodyProps) {
   const { t } = useTranslation();
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const queryClient = useQueryClient();
+  const saveProjectName = useCallback(
+    async (name: string) => {
+      await client.renameProject(selectedHost.projectId, name || null);
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+    [client, queryClient, selectedHost.projectId],
+  );
   const [editSessionId, setEditSessionId] = useState(0);
   const openEditSheet = useCallback(() => {
     setEditSessionId((id) => id + 1);
@@ -270,24 +280,44 @@ function ProjectSettingsBody({
 
       <View style={styles.headerBlock}>
         <View style={styles.titleRow}>
-          <ProjectTitleIcon
-            iconDataUri={projectIconDataUri}
-            projectName={selectedHost.projectName}
-            projectViewKey={project.viewKey}
-          />
-          <Text style={styles.projectTitle} numberOfLines={1}>
-            {selectedHost.projectName}
-          </Text>
           <Pressable
-            testID="project-edit-button"
             accessibilityRole="button"
-            accessibilityLabel={t("settings.project.edit.title")}
+            accessibilityLabel={t("settings.project.edit.icon")}
             onPress={openEditSheet}
-            hitSlop={8}
-            style={styles.editButton}
+            disabled={!supportsCustomIcon}
+            testID="project-edit-icon-button"
           >
-            <Pencil size={ICON_SIZE} color={styles.iconColor.color} />
+            <ProjectTitleIcon
+              iconDataUri={projectIconDataUri}
+              projectName={selectedHost.projectName}
+              projectViewKey={project.viewKey}
+            />
           </Pressable>
+          {isRenaming ? (
+            <InlineRenameInput
+              initialValue={selectedHost.projectName}
+              onSubmit={saveProjectName}
+              onCancel={() => setIsRenaming(false)}
+              allowEmpty
+              style={styles.projectTitle}
+              accessibilityLabel={t("settings.project.edit.nameLabel")}
+              testID="project-name-input"
+            />
+          ) : (
+            <Pressable
+              testID="project-edit-button"
+              accessibilityRole="button"
+              accessibilityLabel={t("settings.project.edit.nameLabel")}
+              onPress={() => setIsRenaming(true)}
+              hitSlop={8}
+              style={styles.projectNameButton}
+            >
+              <Text style={styles.projectTitle} numberOfLines={1}>
+                {selectedHost.projectName}
+              </Text>
+              <Pencil size={ICON_SIZE} color={styles.iconColor.color} />
+            </Pressable>
+          )}
         </View>
       </View>
 
@@ -1148,8 +1178,12 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.fontWeight.medium,
     flexShrink: 1,
   },
-  editButton: {
-    padding: theme.spacing[1],
+  projectNameButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing[3],
+    flexShrink: 1,
+    minWidth: 0,
   },
   titleIconFallbackText: {
     fontSize: theme.fontSize.base,

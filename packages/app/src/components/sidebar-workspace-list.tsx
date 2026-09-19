@@ -12,6 +12,7 @@ import {
 import {
   memo,
   useCallback,
+  useId,
   useMemo,
   useState,
   useEffect,
@@ -34,7 +35,7 @@ import type { Theme } from "@/styles/theme";
 import type { SidebarSurfaceBackdrop } from "@/styles/surface-backdrop";
 import { getSidebarRowBackdrop } from "@/components/sidebar/sidebar-row-backdrop";
 import { type GestureType } from "react-native-gesture-handler";
-import { WorkspaceRenameModal } from "@/components/workspace-rename-modal";
+import { useWorkspaceRename, type WorkspaceRenameController } from "@/hooks/use-workspace-rename";
 import { useWorkspaceClipboardActions } from "@/hooks/use-workspace-clipboard-actions";
 import { ExternalLink, Settings, MoreVertical, Plus, Trash2 } from "lucide-react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
@@ -263,6 +264,7 @@ interface ProjectHeaderRowProps {
 
 interface WorkspaceRowInnerProps {
   workspace: SidebarWorkspaceEntry;
+  rename: WorkspaceRenameController;
   hostBadge?: HostBadgeModel | null;
   leadingProjectName?: string | null;
   leadingProjectIconDataUri?: string | null;
@@ -1049,6 +1051,7 @@ function ProjectHeaderRow({
 
 function WorkspaceRowInner({
   workspace,
+  rename,
   hostBadge,
   leadingProjectName,
   leadingProjectIconDataUri,
@@ -1091,18 +1094,20 @@ function WorkspaceRowInner({
   } = dragHandleProps?.attributes ?? {};
 
   const handlePress = useCallback(() => {
+    if (rename.isRenaming) return;
     if (interaction.didLongPressRef.current) {
       interaction.didLongPressRef.current = false;
       return;
     }
     onPress();
-  }, [interaction.didLongPressRef, onPress]);
+  }, [interaction.didLongPressRef, onPress, rename.isRenaming]);
   const handleWorkspacePressIn = useCallback(
     (event: GestureResponderEvent) => {
+      if (rename.isRenaming) return;
       setIsPressed(true);
       interaction.handlePressIn(event);
     },
-    [interaction],
+    [interaction, rename.isRenaming],
   );
   const handleWorkspacePressOut = useCallback(() => {
     setIsPressed(false);
@@ -1112,7 +1117,11 @@ function WorkspaceRowInner({
   const accessibilityState = useMemo(() => ({ selected }), [selected]);
 
   return (
-    <SidebarWorkspaceRowFrame workspace={workspace} isDragging={isDragging}>
+    <SidebarWorkspaceRowFrame
+      workspace={workspace}
+      isDragging={isDragging}
+      isRenaming={rename.isRenaming}
+    >
       {({ isHovered, contextMenuOpen, onContextMenuOpenChange, hoverHandlers }) => {
         const isDesktop = !isTouchPlatform;
         const serviceSummary = isDesktop ? selectWorkspaceServiceSummary(workspace.scripts) : null;
@@ -1125,8 +1134,8 @@ function WorkspaceRowInner({
         const backdrop = getSidebarRowBackdrop({ isDragging, isPressed, selected, isHovered });
         return (
           <View
-            {...dragAttributes}
-            {...dragHandleProps?.listeners}
+            {...(rename.isRenaming ? {} : dragAttributes)}
+            {...(rename.isRenaming ? {} : dragHandleProps?.listeners)}
             ref={dragHandleProps?.setActivatorNodeRef as unknown as Ref<View>}
             style={styles.workspaceRowContainer}
             {...hoverHandlers}
@@ -1158,13 +1167,14 @@ function WorkspaceRowInner({
               style={workspaceRowStyle}
               highlightStyle={styles.workspaceRowPressed}
               onPressIn={handleWorkspacePressIn}
-              onTouchMove={interaction.handleTouchMove}
+              onTouchMove={rename.isRenaming ? undefined : interaction.handleTouchMove}
               onPressOut={handleWorkspacePressOut}
               onPress={handlePress}
               testID={`sidebar-workspace-row-${workspace.workspaceKey}`}
             >
               <SidebarWorkspaceRowContent
                 workspace={workspace}
+                rename={rename}
                 hostBadge={hostBadge}
                 leadingProjectName={leadingProjectName}
                 leadingProjectIconDataUri={leadingProjectIconDataUri}
@@ -1245,7 +1255,8 @@ function WorkspaceRowWithMenu({
   const { t } = useTranslation();
   const toast = useToast();
   const [isHidingWorkspace, setIsHidingWorkspace] = useState(false);
-  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const renameSourceId = useId();
+  const rename = useWorkspaceRename({ workspace, placement: "sidebar", sourceId: renameSourceId });
   const isArchiving = workspace.archivingAt !== null || isHidingWorkspace;
   const redirectAfterArchive = useCallback(() => {
     redirectIfArchivingActiveWorkspace({
@@ -1281,14 +1292,6 @@ function WorkspaceRowWithMenu({
     clipboard.copyBranchName(workspace);
   }, [clipboard, workspace]);
 
-  const handleOpenRename = useCallback(() => {
-    setIsRenameOpen(true);
-  }, []);
-
-  const handleCloseRename = useCallback(() => {
-    setIsRenameOpen(false);
-  }, []);
-
   const isPinned = workspace.pinnedAt != null;
   const handleTogglePin = useCallback(() => {
     onToggleWorkspacePin(workspace);
@@ -1315,7 +1318,7 @@ function WorkspaceRowWithMenu({
   useKeyboardActionHandler({
     handlerId: `workspace-archive-${workspace.workspaceKey}`,
     actions: ["workspace.archive"],
-    enabled: selected && !isArchiving,
+    enabled: selected && !isArchiving && !rename.isRenaming,
     priority: 0,
     handle: () => {
       handleArchive();
@@ -1324,43 +1327,36 @@ function WorkspaceRowWithMenu({
   });
 
   return (
-    <>
-      <WorkspaceRowInner
-        workspace={workspace}
-        hostBadge={hostBadge}
-        leadingProjectName={leadingProjectName}
-        leadingProjectIconDataUri={leadingProjectIconDataUri}
-        selected={selected}
-        shortcutNumber={shortcutNumber}
-        showShortcutBadge={showShortcutBadge}
-        onPress={onPress}
-        drag={drag}
-        isDragging={isDragging}
-        isArchiving={isArchiving}
-        isCreating={isCreating}
-        dragHandleProps={dragHandleProps}
-        menuController={null}
-        archiveLabel={t("sidebar.workspace.actions.archive")}
-        archiveStatus={isArchiving ? "pending" : "idle"}
-        archivePendingLabel={t("sidebar.workspace.actions.archiving")}
-        onArchive={handleArchive}
-        onCopyBranchName={canCopyBranchName ? handleCopyBranchName : undefined}
-        onCopyPath={handleCopyPath}
-        onRename={handleOpenRename}
-        onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
-        onMarkAsUnread={canMarkUnread ? handleMarkAsUnread : undefined}
-        archiveShortcutKeys={selected ? archiveShortcutKeys : null}
-        isPinned={isPinned}
-        onTogglePin={onTogglePin}
-        reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}
-      />
-      <WorkspaceRenameModal
-        visible={isRenameOpen}
-        workspace={workspace}
-        onClose={handleCloseRename}
-        testID={`sidebar-workspace-rename-modal-${workspace.workspaceKey}`}
-      />
-    </>
+    <WorkspaceRowInner
+      workspace={workspace}
+      hostBadge={hostBadge}
+      leadingProjectName={leadingProjectName}
+      leadingProjectIconDataUri={leadingProjectIconDataUri}
+      selected={selected}
+      shortcutNumber={shortcutNumber}
+      showShortcutBadge={showShortcutBadge}
+      onPress={onPress}
+      drag={drag}
+      isDragging={isDragging}
+      isArchiving={isArchiving}
+      isCreating={isCreating}
+      dragHandleProps={dragHandleProps}
+      menuController={null}
+      archiveLabel={t("sidebar.workspace.actions.archive")}
+      archiveStatus={isArchiving ? "pending" : "idle"}
+      archivePendingLabel={t("sidebar.workspace.actions.archiving")}
+      onArchive={handleArchive}
+      onCopyBranchName={canCopyBranchName ? handleCopyBranchName : undefined}
+      onCopyPath={handleCopyPath}
+      onRename={rename.open}
+      rename={rename}
+      onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
+      onMarkAsUnread={canMarkUnread ? handleMarkAsUnread : undefined}
+      archiveShortcutKeys={selected ? archiveShortcutKeys : null}
+      isPinned={isPinned}
+      onTogglePin={onTogglePin}
+      reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}
+    />
   );
 }
 

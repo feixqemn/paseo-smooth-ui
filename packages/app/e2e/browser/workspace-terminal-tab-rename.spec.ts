@@ -1,6 +1,5 @@
 import { test, expect, type Page } from "../support/fixtures";
 import { clickNewTerminal, gotoWorkspace } from "../support/helpers/launcher";
-import { renameModalInput, renameModalSubmit } from "../support/helpers/rename";
 import { seedWorkspace, type SeededWorkspace } from "../support/helpers/seed-client";
 
 async function fetchTerminalTitle(
@@ -103,12 +102,12 @@ test.describe("Workspace terminal tab rename", () => {
       await expect(renameItem).toBeVisible({ timeout: 10_000 });
       await renameItem.click();
 
-      const modalPrefix = `workspace-tab-rename-modal-terminal-${terminalId}`;
-      const input = renameModalInput(page, modalPrefix);
+      const inputTestId = `workspace-tab-rename-input-terminal-${terminalId}`;
+      const input = page.getByTestId(inputTestId);
       await expect(input).toBeVisible({ timeout: 10_000 });
 
       await input.fill("My Renamed Terminal");
-      await renameModalSubmit(page, modalPrefix).click();
+      await page.getByTestId(inputTestId).press("Enter");
 
       await expect(input).toHaveCount(0, { timeout: 15_000 });
       await expect(tab).toContainText("My Renamed Terminal", { timeout: 15_000 });

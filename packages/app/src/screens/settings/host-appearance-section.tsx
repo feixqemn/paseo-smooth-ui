@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AdaptiveRenameModal } from "@/components/rename-modal";
+import { InlineRenameInput } from "@/components/inline-rename-input";
 import { WorkspaceMetaRow } from "@/components/sidebar/workspace-meta-row";
 import { useToast } from "@/contexts/toast-context";
 import { SettingsSection } from "@/components/settings/headings/settings-section";
@@ -37,7 +37,7 @@ function dropdownTriggerStyle({ pressed }: PressableStateCallbackType) {
   return pressed ? [styles.trigger, styles.triggerPressed] : styles.trigger;
 }
 
-function HostRenameButton({ host }: { host: HostProfile }) {
+function HostName({ host }: { host: HostProfile }) {
   const { t } = useTranslation();
   const { renameHost } = useHostMutations();
   const [isEditing, setIsEditing] = useState(false);
@@ -54,30 +54,29 @@ function HostRenameButton({ host }: { host: HostProfile }) {
   const openEditor = useCallback(() => setIsEditing(true), []);
   const closeEditor = useCallback(() => setIsEditing(false), []);
 
-  return (
-    <>
-      <Pressable
-        onPress={openEditor}
-        hitSlop={8}
-        style={styles.renameButton}
-        accessibilityRole="button"
-        accessibilityLabel={t("settings.host.daemon.rename.editLabel")}
-        testID="host-page-label-edit-button"
-      >
-        <ThemedPencil size={ICON_SIZE.sm} uniProps={mutedColorMapping} />
-      </Pressable>
-
-      <AdaptiveRenameModal
-        visible={isEditing}
-        title={t("settings.host.daemon.rename.title")}
-        initialValue={host.label}
-        placeholder={t("settings.host.daemon.rename.placeholder")}
-        submitLabel={t("settings.host.daemon.rename.submit")}
-        onClose={closeEditor}
-        onSubmit={handleSubmit}
-        testID="host-page-rename-modal"
-      />
-    </>
+  return isEditing ? (
+    <InlineRenameInput
+      initialValue={host.label}
+      onCancel={closeEditor}
+      onSubmit={handleSubmit}
+      style={styles.nameText}
+      accessibilityLabel={t("settings.host.daemon.rename.editLabel")}
+      testID="host-page-name-input"
+    />
+  ) : (
+    <Pressable
+      onPress={openEditor}
+      hitSlop={8}
+      style={styles.nameValue}
+      accessibilityRole="button"
+      accessibilityLabel={t("settings.host.daemon.rename.editLabel")}
+      testID="host-page-label-edit-button"
+    >
+      <Text style={styles.nameText} numberOfLines={1}>
+        {host.label}
+      </Text>
+      <ThemedPencil size={ICON_SIZE.sm} uniProps={mutedColorMapping} />
+    </Pressable>
   );
 }
 
@@ -293,10 +292,7 @@ export function HostAppearanceSection({ host }: { host: HostProfile }) {
             <Text style={settingsStyles.rowTitle}>{t("settings.host.appearance.name.label")}</Text>
           </View>
           <View style={styles.nameValue}>
-            <Text style={styles.nameText} numberOfLines={1}>
-              {host.label}
-            </Text>
-            <HostRenameButton host={host} />
+            <HostName host={host} />
           </View>
         </View>
         <ColorRow color={host.appearance.color} onChange={handleColorChange} />
@@ -335,10 +331,6 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: ICON_SIZE.md / 2,
     borderWidth: theme.borderWidth[1],
     borderColor: theme.colors.border,
-  },
-  renameButton: {
-    padding: theme.spacing[1],
-    borderRadius: theme.borderRadius.md,
   },
   nameValue: {
     flexDirection: "row",

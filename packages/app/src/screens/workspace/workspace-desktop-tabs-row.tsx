@@ -82,7 +82,9 @@ import {
   HorizontalScrollBoundaryShades,
   useHorizontalScrollBoundary,
 } from "@/components/ui/horizontal-scroll-boundary";
+import { InlineRenameInput } from "@/components/inline-rename-input";
 import { useSessionStore } from "@/stores/session-store";
+import type { RenamingWorkspaceTab } from "@/screens/workspace/use-workspace-tab-rename";
 
 const DROPDOWN_WIDTH = 220;
 const DEFAULT_INLINE_ADD_BUTTON_RESERVED_WIDTH = 36;
@@ -512,6 +514,9 @@ interface WorkspaceDesktopTabsRowProps {
   onCopyFilePath: (path: string) => Promise<void> | void;
   onReloadAgent: (agentId: string) => Promise<void> | void;
   onRenameTab: (tab: WorkspaceTabDescriptor) => void;
+  renamingTab: RenamingWorkspaceTab | null;
+  onRenameSubmit: (nextTitle: string) => Promise<void>;
+  onRenameCancel: () => void;
   onCloseTabsToLeft: (tabId: string) => Promise<void> | void;
   onCloseTabsToRight: (tabId: string) => Promise<void> | void;
   onCloseOtherTabs: (tabId: string) => Promise<void> | void;
@@ -659,6 +664,7 @@ function TabHandleContent({
   tabLabelSkeletonStyle,
   tabLabelStyle,
   modifiedTestId,
+  inlineRenameInput,
 }: {
   presentation: WorkspaceTabPresentation;
   isHighlighted: boolean;
@@ -667,6 +673,7 @@ function TabHandleContent({
   tabLabelSkeletonStyle: React.ComponentProps<typeof View>["style"];
   tabLabelStyle: React.ComponentProps<typeof Text>["style"];
   modifiedTestId: string;
+  inlineRenameInput?: React.ReactNode;
 }) {
   const { t } = useTranslation();
   const tabHandleDataSet = useMemo(
@@ -679,10 +686,11 @@ function TabHandleContent({
       <View style={styles.tabIcon}>
         <WorkspaceTabIcon presentation={presentation} active={isHighlighted} backdrop={backdrop} />
       </View>
-      {showLabel && presentation.titleState === "loading" ? (
+      {showLabel && inlineRenameInput ? inlineRenameInput : null}
+      {showLabel && !inlineRenameInput && presentation.titleState === "loading" ? (
         <View style={tabLabelSkeletonStyle} />
       ) : null}
-      {showLabel && presentation.titleState !== "loading" ? (
+      {showLabel && !inlineRenameInput && presentation.titleState !== "loading" ? (
         <Text style={tabLabelStyle} selectable={false} numberOfLines={1} ellipsizeMode="tail">
           {presentation.label}
         </Text>
@@ -719,6 +727,9 @@ function TabChip({
   onNavigateTab,
   onCloseTab,
   dragHandleProps,
+  renamingTab,
+  onRenameSubmit,
+  onRenameCancel,
 }: {
   serverId: string;
   tab: WorkspaceTabDescriptor;
@@ -738,8 +749,12 @@ function TabChip({
   onNavigateTab: (tabId: string) => void;
   onCloseTab: (tabId: string) => Promise<void> | void;
   dragHandleProps: DraggableListDragHandleProps | undefined;
+  renamingTab: RenamingWorkspaceTab | null;
+  onRenameSubmit: (nextTitle: string) => Promise<void>;
+  onRenameCancel: () => void;
 }) {
   const { closeButtonTestId, contextMenuTestId, menuEntries } = resolvedTab;
+  const { t } = useTranslation();
   const middleClickRef = useMiddleClickClose(
     useCallback(() => void onCloseTab(tab.tabId), [onCloseTab, tab.tabId]),
   );
@@ -822,6 +837,32 @@ function TabChip({
     () => [styles.tabLabel, isHighlighted && styles.tabLabelActive],
     [isHighlighted],
   );
+  const renamingThisTab = renamingTab?.tabKey === tab.key ? renamingTab : null;
+  const isRenaming = renamingThisTab !== null;
+  const tabHandle = (
+    <TabHandleContent
+      presentation={presentation}
+      isHighlighted={isHighlighted}
+      showLabel={showLabel || isRenaming}
+      backdrop={chipBackdrop}
+      tabLabelSkeletonStyle={tabLabelSkeletonStyle}
+      tabLabelStyle={tabLabelStyle}
+      modifiedTestId={`workspace-tab-modified-${testIdentity}`}
+      inlineRenameInput={
+        renamingThisTab ? (
+          <InlineRenameInput
+            initialValue={renamingThisTab.currentTitle}
+            maxLength={200}
+            accessibilityLabel={t("workspace.tabs.menu.rename")}
+            testID={`workspace-tab-rename-input-${renamingThisTab.kind}-${renamingThisTab.id}`}
+            style={styles.tabRenameInput}
+            onSubmit={onRenameSubmit}
+            onCancel={onRenameCancel}
+          />
+        ) : undefined
+      }
+    />
+  );
 
   return (
     <View
@@ -830,103 +871,103 @@ function TabChip({
       onPointerEnter={handleTabPointerEnter}
       onPointerLeave={handleTabPointerLeave}
     >
-      <ContextMenu key={tab.key}>
-        <Tooltip delayDuration={400} enabledOnDesktop enabledOnMobile={false}>
-          <TooltipTrigger asChild triggerRefProp="triggerRef">
-            <ContextMenuTrigger
-              {...(dragHandleProps?.attributes as object | undefined)}
-              {...(dragHandleProps?.listeners as object | undefined)}
-              testID={`workspace-tab-${testIdentity}`}
-              triggerRef={dragHandleProps?.setActivatorNodeRef as unknown as undefined}
-              enabledOnMobile={false}
-              style={tabChipStyle}
-              onPressIn={handleNavigateTab}
-              onPress={handleNavigateTab}
-              accessibilityRole="button"
-              accessibilityLabel={accessibilityLabel}
-              accessibilityState={tabAccessibilityState}
-              aria-selected={isActive}
+      {isRenaming ? (
+        <View testID={`workspace-tab-${testIdentity}`} style={tabChipStyle()}>
+          {tabHandle}
+        </View>
+      ) : (
+        <ContextMenu key={tab.key}>
+          <Tooltip delayDuration={400} enabledOnDesktop enabledOnMobile={false}>
+            <TooltipTrigger asChild triggerRefProp="triggerRef">
+              <ContextMenuTrigger
+                {...(dragHandleProps?.attributes as object | undefined)}
+                {...(dragHandleProps?.listeners as object | undefined)}
+                testID={`workspace-tab-${testIdentity}`}
+                triggerRef={dragHandleProps?.setActivatorNodeRef as unknown as undefined}
+                enabledOnMobile={false}
+                style={tabChipStyle}
+                onPressIn={handleNavigateTab}
+                onPress={handleNavigateTab}
+                accessibilityRole="button"
+                accessibilityLabel={accessibilityLabel}
+                accessibilityState={tabAccessibilityState}
+                aria-selected={isActive}
+              >
+                {tabHandle}
+              </ContextMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              align="center"
+              offset={8}
+              maxWidth={720}
+              testID={`workspace-tab-tooltip-${testIdentity}`}
             >
-              <TabHandleContent
-                presentation={presentation}
-                isHighlighted={isHighlighted}
-                showLabel={showLabel}
-                backdrop={chipBackdrop}
-                tabLabelSkeletonStyle={tabLabelSkeletonStyle}
-                tabLabelStyle={tabLabelStyle}
-                modifiedTestId={`workspace-tab-modified-${testIdentity}`}
-              />
-            </ContextMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent
-            side="bottom"
-            align="center"
-            offset={8}
-            maxWidth={720}
-            testID={`workspace-tab-tooltip-${testIdentity}`}
-          >
-            {tab.target.kind === "agent" ? (
-              <AgentTabTooltipBody
-                serverId={serverId}
-                agentId={tab.target.agentId}
-                title={tooltipLabel}
-              />
-            ) : (
-              <Text style={styles.newTabTooltipText}>{tooltipLabel}</Text>
-            )}
-          </TooltipContent>
-        </Tooltip>
+              {tab.target.kind === "agent" ? (
+                <AgentTabTooltipBody
+                  serverId={serverId}
+                  agentId={tab.target.agentId}
+                  title={tooltipLabel}
+                />
+              ) : (
+                <Text style={styles.newTabTooltipText}>{tooltipLabel}</Text>
+              )}
+            </TooltipContent>
+          </Tooltip>
 
-        {showCloseButton ? (
-          <View
-            pointerEvents={showCloseControl ? "box-none" : "none"}
-            style={[
-              styles.tabTrailingOverlay,
-              showCloseControl ? styles.tabTrailingOverlayShown : styles.tabTrailingOverlayHidden,
-            ]}
+          <ContextMenuContent align="start" width={DROPDOWN_WIDTH} testID={contextMenuTestId}>
+            {menuEntries.map((entry) =>
+              entry.kind === "separator" ? (
+                <ContextMenuSeparator key={entry.key} />
+              ) : (
+                <TabContextMenuItem key={entry.key} entry={entry} />
+              ),
+            )}
+          </ContextMenuContent>
+        </ContextMenu>
+      )}
+
+      {showCloseButton && !isRenaming ? (
+        <View
+          pointerEvents={showCloseControl ? "box-none" : "none"}
+          style={[
+            styles.tabTrailingOverlay,
+            showCloseControl ? styles.tabTrailingOverlayShown : styles.tabTrailingOverlayHidden,
+          ]}
+        >
+          <TrailingActionScrim backdrop={chipBackdrop} />
+          <Pressable
+            {...(closeButtonDragBlockers as object | undefined)}
+            testID={closeButtonTestId}
+            accessibilityRole="button"
+            accessibilityLabel={t("workspace.tabs.menu.close")}
+            disabled={isClosingTab}
+            onPressIn={handleCloseButtonPressIn}
+            onHoverIn={handleCloseButtonHoverIn}
+            onHoverOut={handleCloseButtonHoverOut}
+            onPress={handleCloseButtonPress}
+            style={styles.tabCloseButton}
           >
-            <TrailingActionScrim backdrop={chipBackdrop} />
-            <Pressable
-              {...(closeButtonDragBlockers as object | undefined)}
-              testID={closeButtonTestId}
-              disabled={isClosingTab}
-              onPressIn={handleCloseButtonPressIn}
-              onHoverIn={handleCloseButtonHoverIn}
-              onHoverOut={handleCloseButtonHoverOut}
-              onPress={handleCloseButtonPress}
-              style={styles.tabCloseButton}
-            >
-              {({ hovered: closeHovered, pressed }) => {
-                const highlighted = closeHovered || pressed;
-                if (isClosingTab) {
-                  return (
-                    <ThemedLoadingSpinner
-                      size={12}
-                      uniProps={highlighted ? foregroundColorMapping : mutedColorMapping}
-                    />
-                  );
-                }
+            {({ hovered: closeHovered, pressed }) => {
+              const highlighted = closeHovered || pressed;
+              if (isClosingTab) {
                 return (
-                  <ThemedX
+                  <ThemedLoadingSpinner
                     size={12}
                     uniProps={highlighted ? foregroundColorMapping : mutedColorMapping}
                   />
                 );
-              }}
-            </Pressable>
-          </View>
-        ) : null}
-
-        <ContextMenuContent align="start" width={DROPDOWN_WIDTH} testID={contextMenuTestId}>
-          {menuEntries.map((entry) =>
-            entry.kind === "separator" ? (
-              <ContextMenuSeparator key={entry.key} />
-            ) : (
-              <TabContextMenuItem key={entry.key} entry={entry} />
-            ),
-          )}
-        </ContextMenuContent>
-      </ContextMenu>
+              }
+              return (
+                <ThemedX
+                  size={12}
+                  uniProps={highlighted ? foregroundColorMapping : mutedColorMapping}
+                />
+              );
+            }}
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -1005,6 +1046,9 @@ function ResolvedWorkspaceDesktopTabsRow({
   onCopyFilePath,
   onReloadAgent,
   onRenameTab,
+  renamingTab,
+  onRenameSubmit,
+  onRenameCancel,
   onCloseTabsToLeft,
   onCloseTabsToRight,
   onCloseOtherTabs,
@@ -1261,6 +1305,9 @@ function ResolvedWorkspaceDesktopTabsRow({
           onCopyFilePath={onCopyFilePath}
           onReloadAgent={onReloadAgent}
           onRenameTab={onRenameTab}
+          renamingTab={renamingTab}
+          onRenameSubmit={onRenameSubmit}
+          onRenameCancel={onRenameCancel}
           onCloseTabsToLeft={onCloseTabsToLeft}
           onCloseTabsToRight={onCloseTabsToRight}
           onCloseOtherTabs={onCloseOtherTabs}
@@ -1294,6 +1341,9 @@ function ResolvedWorkspaceDesktopTabsRow({
       onNavigateTab,
       onReloadAgent,
       onRenameTab,
+      renamingTab,
+      onRenameSubmit,
+      onRenameCancel,
       setHoveredCloseTabKey,
       tabMenuLabels,
       tabDropPreviewIndex,
@@ -1408,6 +1458,9 @@ function ResolvedDesktopTabChip({
   onCopyFilePath,
   onReloadAgent,
   onRenameTab,
+  renamingTab,
+  onRenameSubmit,
+  onRenameCancel,
   onCloseTabsToLeft,
   onCloseTabsToRight,
   onCloseOtherTabs,
@@ -1434,6 +1487,9 @@ function ResolvedDesktopTabChip({
   onCopyFilePath: (path: string) => Promise<void> | void;
   onReloadAgent: (agentId: string) => Promise<void> | void;
   onRenameTab: (tab: WorkspaceTabDescriptor) => void;
+  renamingTab: RenamingWorkspaceTab | null;
+  onRenameSubmit: (nextTitle: string) => Promise<void>;
+  onRenameCancel: () => void;
   onCloseTabsToLeft: (tabId: string) => Promise<void> | void;
   onCloseTabsToRight: (tabId: string) => Promise<void> | void;
   onCloseOtherTabs: (tabId: string) => Promise<void> | void;
@@ -1521,6 +1577,9 @@ function ResolvedDesktopTabChip({
         onNavigateTab={onNavigateTab}
         onCloseTab={onCloseTab}
         dragHandleProps={dragHandleProps}
+        renamingTab={renamingTab}
+        onRenameSubmit={onRenameSubmit}
+        onRenameCancel={onRenameCancel}
       />
       {showDropIndicatorAfter ? (
         <View style={[styles.tabDropIndicator, styles.tabDropIndicatorAfter]} />
@@ -1667,6 +1726,11 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: theme.borderRadius.full,
     backgroundColor: theme.colors.surface3,
     opacity: 0.9,
+  },
+  tabRenameInput: {
+    color: theme.colors.foreground,
+    fontSize: theme.fontSize.base,
+    fontWeight: theme.fontWeight.normal,
   },
   tabLabelActive: {
     color: theme.colors.foreground,

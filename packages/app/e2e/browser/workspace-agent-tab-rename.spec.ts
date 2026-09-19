@@ -4,7 +4,6 @@ import { seedWorkspace, type SeedDaemonClient } from "../support/helpers/seed-cl
 import { createIdleAgent, expectWorkspaceTabVisible } from "../support/helpers/archive-tab";
 import { waitForWorkspaceTabsVisible } from "../support/helpers/workspace-tabs";
 import { buildHostAgentDetailRoute } from "@/utils/host-routes";
-import { renameModalInput, renameModalSubmit } from "../support/helpers/rename";
 import { getServerId } from "../support/helpers/server-id";
 
 async function openAgentInWorkspace(page: Page, agent: { id: string; workspaceId: string }) {
@@ -51,14 +50,14 @@ test.describe("Workspace agent tab rename", () => {
       await expect(renameItem).toBeVisible({ timeout: 10_000 });
       await renameItem.click();
 
-      const modalPrefix = `workspace-tab-rename-modal-agent-${agent.id}`;
-      const input = renameModalInput(page, modalPrefix);
+      const inputTestId = `workspace-tab-rename-input-agent-${agent.id}`;
+      const input = page.getByTestId(inputTestId);
       await expect(input).toBeVisible({ timeout: 10_000 });
       await expect(input).toHaveValue(initialTitle);
 
       const renamed = "My Renamed Agent";
       await input.fill(renamed);
-      await renameModalSubmit(page, modalPrefix).click();
+      await page.getByTestId(inputTestId).press("Enter");
 
       await expect(input).toHaveCount(0, { timeout: 15_000 });
       await expect(tab).toContainText(renamed, { timeout: 15_000 });

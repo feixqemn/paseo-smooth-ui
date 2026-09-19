@@ -1,6 +1,5 @@
 import { test, expect, type Page } from "../support/fixtures";
 import { clickNewTerminal, gotoWorkspace } from "../support/helpers/launcher";
-import { renameModalInput, renameModalSubmit } from "../support/helpers/rename";
 import { seedWorkspace, type SeededWorkspace } from "../support/helpers/seed-client";
 import { selectWorkspaceInSidebar } from "../support/helpers/sidebar";
 
@@ -20,10 +19,10 @@ async function createNamedTerminal(page: Page, workspace: SeededWorkspace, title
   const terminalId = (await list()).terminals[0]!.id;
   await terminalTab(page, terminalId).click({ button: "right" });
   await page.getByRole("menuitem", { name: "Rename", exact: true }).click();
-  const modal = `workspace-tab-rename-modal-terminal-${terminalId}`;
-  await renameModalInput(page, modal).fill(title);
-  await renameModalSubmit(page, modal).click();
-  await expect(renameModalInput(page, modal)).toHaveCount(0);
+  const inputTestId = `workspace-tab-rename-input-terminal-${terminalId}`;
+  await page.getByTestId(inputTestId).fill(title);
+  await page.getByTestId(inputTestId).press("Enter");
+  await expect(page.getByTestId(inputTestId)).toHaveCount(0);
   await expect(terminalTab(page, terminalId)).toHaveText(title);
   return terminalId;
 }

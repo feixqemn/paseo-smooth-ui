@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { test, expect } from "../support/fixtures";
 import { openAgentRoute, seedMockAgentWorkspace } from "../support/helpers/mock-agent";
-import { renameModalInput, renameModalSubmit } from "../support/helpers/rename";
 import type { SeedDaemonClient } from "../support/helpers/seed-client";
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
@@ -44,8 +43,7 @@ test.describe("Workspace session rename (compact tab switcher)", () => {
         },
       );
 
-      // Open this session's "…" actions. Before the fix this tried to open a popover-Modal
-      // that never surfaced over the sheet on native; it now opens as a stacked sheet.
+      // Rename through the existing tab switcher, directly in the selected title.
       const menuBase = `workspace-tab-menu-agent_${session.agentId}`;
       const actionsTrigger = page.getByTestId(`${menuBase}-trigger`);
       await expect(actionsTrigger).toBeVisible({ timeout: 15_000 });
@@ -55,14 +53,14 @@ test.describe("Workspace session rename (compact tab switcher)", () => {
       await expect(renameItem).toBeVisible({ timeout: 10_000 });
       await renameItem.click();
 
-      const modalPrefix = `workspace-tab-rename-modal-agent-${session.agentId}`;
-      const input = renameModalInput(page, modalPrefix);
+      const inputTestId = `workspace-tab-rename-input-agent-${session.agentId}`;
+      const input = page.getByTestId(inputTestId);
       await expect(input).toBeVisible({ timeout: 10_000 });
       await expect(input).toHaveValue(initialTitle);
 
       const renamed = "Renamed from the dropdown";
       await input.fill(renamed);
-      await renameModalSubmit(page, modalPrefix).click();
+      await page.getByTestId(inputTestId).press("Enter");
 
       await expect(input).toHaveCount(0, { timeout: 15_000 });
       await expect(page.getByTestId("workspace-tab-switcher-trigger")).toContainText(renamed, {

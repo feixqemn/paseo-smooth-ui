@@ -192,6 +192,7 @@ interface WorkspaceTabOptionRowProps {
   active: boolean;
   onPress: () => void;
   trailingAccessory?: ReactNode;
+  inlineRenameInput?: ReactNode;
 }
 
 export function WorkspaceTabOptionRow({
@@ -200,6 +201,7 @@ export function WorkspaceTabOptionRow({
   active,
   onPress,
   trailingAccessory,
+  inlineRenameInput,
 }: WorkspaceTabOptionRowProps): ReactElement {
   const { t } = useTranslation();
   const isOptionActive = useCallback(
@@ -220,29 +222,42 @@ export function WorkspaceTabOptionRow({
   );
   return (
     <View style={optionRowStyle}>
-      <Pressable onPress={onPress} style={pressableStyle}>
-        {(state) => {
-          const optionActive = isOptionActive(state);
-          return (
-            <>
-              <View style={styles.optionLeadingSlot}>
-                <WorkspaceTabIcon
-                  presentation={presentation}
-                  active={selected || active}
-                  backdrop={optionActive ? "surface1" : "surface0"}
-                />
-              </View>
-              <View style={styles.optionContent}>
-                <Text numberOfLines={1} style={styles.optionLabel}>
-                  {presentation.titleState === "loading"
-                    ? t("workspace.tabs.loading")
-                    : presentation.label}
-                </Text>
-              </View>
-            </>
-          );
-        }}
-      </Pressable>
+      {inlineRenameInput ? (
+        <View style={styles.optionMainPressable}>
+          <View style={styles.optionLeadingSlot}>
+            <WorkspaceTabIcon
+              presentation={presentation}
+              active={selected || active}
+              backdrop={active ? "surface1" : "surface0"}
+            />
+          </View>
+          <View style={styles.optionContent}>{inlineRenameInput}</View>
+        </View>
+      ) : (
+        <Pressable onPress={onPress} style={pressableStyle}>
+          {(state) => {
+            const optionActive = isOptionActive(state);
+            return (
+              <>
+                <View style={styles.optionLeadingSlot}>
+                  <WorkspaceTabIcon
+                    presentation={presentation}
+                    active={selected || active}
+                    backdrop={optionActive ? "surface1" : "surface0"}
+                  />
+                </View>
+                <View style={styles.optionContent}>
+                  <Text numberOfLines={1} style={styles.optionLabel}>
+                    {presentation.titleState === "loading"
+                      ? t("workspace.tabs.loading")
+                      : presentation.label}
+                  </Text>
+                </View>
+              </>
+            );
+          }}
+        </Pressable>
+      )}
       {presentation.modified ? (
         <View style={styles.optionModifiedDot} accessibilityLabel={t("workspace.tabs.modified")} />
       ) : null}

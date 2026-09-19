@@ -4,7 +4,6 @@ import { expect, test } from "../support/fixtures";
 import { createIdleAgent } from "../support/helpers/archive-tab";
 import { expectComposerVisible } from "../support/helpers/composer";
 import { clickNewTerminal, terminalSurfaceLocator } from "../support/helpers/launcher";
-import { renameModalInput } from "../support/helpers/rename";
 import { seedWorkspace } from "../support/helpers/seed-client";
 import { getServerId } from "../support/helpers/server-id";
 import { clickSettingsBackToWorkspace, openCompactSettings } from "../support/helpers/settings";
@@ -96,7 +95,7 @@ test.describe("Workspace pane mounting", () => {
         const tab = page.getByTestId(`workspace-tab-agent_${agent.id}`).first();
         await tab.click({ button: "right" });
         await page.getByTestId(`workspace-tab-context-agent_${agent.id}-rename`).click();
-        const renameInput = renameModalInput(page, `workspace-tab-rename-modal-agent-${agent.id}`);
+        const renameInput = page.getByTestId(`workspace-tab-rename-input-agent-${agent.id}`);
         await expect(renameInput).toBeVisible();
 
         const settingsShortcut = await getSettingsShortcut(page);

@@ -1,33 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { WorkspaceRenameModal } from "@/components/workspace-rename-modal";
+import { useCallback, useEffect, useRef } from "react";
 import { useKeyboardActionHandler } from "@/hooks/use-keyboard-action-handler";
 import type { KeyboardActionId } from "@/keyboard/keyboard-action-dispatcher";
 import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import { useWorkspaceFields } from "@/stores/session-store-hooks";
+import {
+  WORKSPACE_HEADER_RENAME_SOURCE_ID,
+  useWorkspaceRenameStore,
+} from "@/stores/workspace-rename-store";
 
 const WORKSPACE_RENAME_ACTIONS: readonly KeyboardActionId[] = ["workspace.rename"];
 
-/**
- * The rename dialog used to live only on the sidebar row, so it was unreachable whenever that row
- * was not rendered — a collapsed project or status group, a collapsed Pinned section, or focus
- * mode. This is the same fix `use-global-workspace-pin-action.ts` applies to pin: one registration
- * keyed on the active route selection.
- *
- * Sidebar rows keep their own modal instances. They rename *their* workspace, not the active one.
- */
+/** Global commands edit the active workspace header, even when its sidebar row is hidden. */
 export function WorkspaceRenameHost() {
   const selection = useActiveWorkspaceSelection();
   const serverId = selection?.serverId ?? null;
   const routeWorkspaceId = selection?.workspaceId ?? null;
-  // Narrow projection so the dialog doesn't re-render on every gitRuntime/diffStat tick.
-  // `id` is projected rather than reusing the route id: the route carries an opaque workspace id
-  // that is not guaranteed to equal the descriptor id, and setWorkspaceTitle needs the descriptor.
   const fields = useWorkspaceFields(serverId, routeWorkspaceId, (workspace) => ({
     id: workspace.id,
     name: workspace.name,
     title: workspace.title ?? null,
   }));
-  const [isOpen, setIsOpen] = useState(false);
+  const start = useWorkspaceRenameStore((state) => state.start);
   const openFrameRef = useRef<number | null>(null);
 
   const cancelPendingOpen = useCallback(() => {
@@ -37,32 +30,40 @@ export function WorkspaceRenameHost() {
     }
   }, []);
 
-  useEffect(() => cancelPendingOpen, [cancelPendingOpen]);
+  const workspaceId = fields?.id ?? null;
+  useEffect(
+    () => () => {
+      cancelPendingOpen();
+      const { active, clear } = useWorkspaceRenameStore.getState();
+      if (
+        active?.placement === "header" &&
+        active.serverId === serverId &&
+        active.workspaceId === workspaceId
+      ) {
+        clear(active);
+      }
+    },
+    [cancelPendingOpen, serverId, workspaceId],
+  );
 
-  // The command center closes and dispatches in the same React batch, so opening synchronously
-  // would mount this modal while the palette is still unmounting — on Android the portal stacking
-  // lands the dialog behind it, and on web the palette's teardown steals focus back from the
-  // input. Wait a frame. (The caller has already cleared the focus-restore element.)
   const handle = useCallback(() => {
-    if (!fields) return false;
+    if (!serverId || !fields) return false;
     cancelPendingOpen();
+    // Let command-center teardown finish before the inline input claims focus.
     openFrameRef.current = requestAnimationFrame(() => {
       openFrameRef.current = null;
-      setIsOpen(true);
+      start({
+        serverId,
+        workspaceId: fields.id,
+        name: fields.name,
+        title: fields.title,
+        initialValue: fields.title ?? fields.name,
+        placement: "header",
+        sourceId: WORKSPACE_HEADER_RENAME_SOURCE_ID,
+      });
     });
     return true;
-  }, [cancelPendingOpen, fields]);
-
-  const handleClose = useCallback(() => {
-    cancelPendingOpen();
-    setIsOpen(false);
-  }, [cancelPendingOpen]);
-
-  // Closing on workspace change avoids renaming whatever the user navigated to instead.
-  useEffect(() => {
-    cancelPendingOpen();
-    setIsOpen(false);
-  }, [cancelPendingOpen, serverId, routeWorkspaceId]);
+  }, [cancelPendingOpen, fields, serverId, start]);
 
   useKeyboardActionHandler({
     handlerId: "workspace-rename-global",
@@ -72,22 +73,5 @@ export function WorkspaceRenameHost() {
     handle,
   });
 
-  const workspace = useMemo(
-    () =>
-      serverId && fields
-        ? { serverId, workspaceId: fields.id, name: fields.name, title: fields.title }
-        : null,
-    [fields, serverId],
-  );
-
-  if (!workspace) return null;
-
-  return (
-    <WorkspaceRenameModal
-      visible={isOpen}
-      workspace={workspace}
-      onClose={handleClose}
-      testID="workspace-rename-modal-global"
-    />
-  );
+  return null;
 }

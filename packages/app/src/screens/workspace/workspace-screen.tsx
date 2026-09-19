@@ -27,6 +27,9 @@ import invariant from "tiny-invariant";
 import { SidebarMenuToggle } from "@/components/headers/menu-header";
 import { ScreenHeader } from "@/components/headers/screen-header";
 import { ScreenTitle } from "@/components/headers/screen-title";
+import { InlineRenameInput } from "@/components/inline-rename-input";
+import { useWorkspaceRename, type WorkspaceRenameController } from "@/hooks/use-workspace-rename";
+import { WORKSPACE_HEADER_RENAME_SOURCE_ID } from "@/stores/workspace-rename-store";
 import { HostBadge } from "@/hosts/host-badge";
 import { useHostBadges } from "@/hosts/use-host-badges";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
@@ -124,7 +127,7 @@ import {
 } from "@/screens/workspace/workspace-tab-presentation";
 import {
   useWorkspaceTabRename,
-  WorkspaceTabRenameModal,
+  type RenamingWorkspaceTab,
 } from "@/screens/workspace/use-workspace-tab-rename";
 import { MobileTabTrailingAccessory } from "@/screens/workspace/workspace-tab-trailing-accessory";
 import {
@@ -422,6 +425,9 @@ interface MobileWorkspaceTabSwitcherProps {
   onCopyFilePath: (path: string) => Promise<void> | void;
   onReloadAgent: (agentId: string) => Promise<void> | void;
   onRenameTab: (tab: WorkspaceTabDescriptor) => void;
+  renamingTab: RenamingWorkspaceTab | null;
+  onRenameSubmit: (nextTitle: string) => Promise<void>;
+  onRenameCancel: () => void;
   onCloseTab: (tabId: string) => Promise<void> | void;
   onCloseTabsAbove: (tabId: string) => Promise<void> | void;
   onCloseTabsBelow: (tabId: string) => Promise<void> | void;
@@ -433,11 +439,13 @@ function MobileActiveTabTrigger({
   normalizedServerId,
   normalizedWorkspaceId,
   backdrop,
+  inlineRenameInput,
 }: {
   activeTab: WorkspaceTabDescriptor | null;
   normalizedServerId: string;
   normalizedWorkspaceId: string;
   backdrop: SurfaceBackdrop;
+  inlineRenameInput?: ReactNode;
 }) {
   if (!activeTab) {
     return null;
@@ -449,6 +457,7 @@ function MobileActiveTabTrigger({
       normalizedServerId={normalizedServerId}
       normalizedWorkspaceId={normalizedWorkspaceId}
       backdrop={backdrop}
+      inlineRenameInput={inlineRenameInput}
     />
   );
 }
@@ -458,11 +467,13 @@ function ResolvedMobileActiveTabTrigger({
   normalizedServerId,
   normalizedWorkspaceId,
   backdrop,
+  inlineRenameInput,
 }: {
   activeTab: WorkspaceTabDescriptor;
   normalizedServerId: string;
   normalizedWorkspaceId: string;
   backdrop: SurfaceBackdrop;
+  inlineRenameInput?: ReactNode;
 }) {
   const { t } = useTranslation();
   return (
@@ -477,11 +488,13 @@ function ResolvedMobileActiveTabTrigger({
             <WorkspaceTabIcon presentation={presentation} active backdrop={backdrop} />
           </View>
 
-          <Text style={styles.switcherTriggerText} numberOfLines={1}>
-            {presentation.titleState === "loading"
-              ? t("workspace.tabs.loading")
-              : presentation.label}
-          </Text>
+          {inlineRenameInput ?? (
+            <Text style={styles.switcherTriggerText} numberOfLines={1}>
+              {presentation.titleState === "loading"
+                ? t("workspace.tabs.loading")
+                : presentation.label}
+            </Text>
+          )}
         </>
       )}
     </WorkspaceTabPresentationResolver>
@@ -529,6 +542,9 @@ function MobileWorkspaceTabOption({
   onCopyFilePath,
   onReloadAgent,
   onRenameTab,
+  renamingTab,
+  onRenameSubmit,
+  onRenameCancel,
   onCloseTab,
   onCloseTabsAbove,
   onCloseTabsBelow,
@@ -548,6 +564,9 @@ function MobileWorkspaceTabOption({
   onCopyFilePath: (path: string) => Promise<void> | void;
   onReloadAgent: (agentId: string) => Promise<void> | void;
   onRenameTab: (tab: WorkspaceTabDescriptor) => void;
+  renamingTab: RenamingWorkspaceTab | null;
+  onRenameSubmit: (nextTitle: string) => Promise<void>;
+  onRenameCancel: () => void;
   onCloseTab: (tabId: string) => Promise<void> | void;
   onCloseTabsAbove: (tabId: string) => Promise<void> | void;
   onCloseTabsBelow: (tabId: string) => Promise<void> | void;
@@ -618,6 +637,7 @@ function MobileWorkspaceTabOption({
     [menuTestIDBase, fallbackLabel, menuEntries],
   );
 
+  const renamingThisTab = renamingTab?.tabKey === tab.key ? renamingTab : null;
   const renderPresentation = useCallback(
     (presentation: WorkspaceTabPresentation) => (
       <WorkspaceTabOptionRow
@@ -625,10 +645,33 @@ function MobileWorkspaceTabOption({
         selected={selected}
         active={active}
         onPress={onPress}
-        trailingAccessory={trailingAccessory}
+        trailingAccessory={renamingThisTab ? undefined : trailingAccessory}
+        inlineRenameInput={
+          renamingThisTab ? (
+            <InlineRenameInput
+              key={renamingThisTab.tabKey}
+              initialValue={renamingThisTab.currentTitle}
+              maxLength={200}
+              accessibilityLabel={t("workspace.tabs.menu.rename")}
+              testID={`workspace-tab-rename-input-${renamingThisTab.kind}-${renamingThisTab.id}`}
+              style={styles.switcherTriggerText}
+              onSubmit={onRenameSubmit}
+              onCancel={onRenameCancel}
+            />
+          ) : undefined
+        }
       />
     ),
-    [selected, active, onPress, trailingAccessory],
+    [
+      selected,
+      active,
+      onPress,
+      trailingAccessory,
+      renamingThisTab,
+      onRenameSubmit,
+      onRenameCancel,
+      t,
+    ],
   );
 
   return (
@@ -657,6 +700,9 @@ const MobileWorkspaceTabSwitcher = memo(function MobileWorkspaceTabSwitcher({
   onCopyFilePath,
   onReloadAgent,
   onRenameTab,
+  renamingTab,
+  onRenameSubmit,
+  onRenameCancel,
   onCloseTab,
   onCloseTabsAbove,
   onCloseTabsBelow,
@@ -714,6 +760,9 @@ const MobileWorkspaceTabSwitcher = memo(function MobileWorkspaceTabSwitcher({
           onCopyFilePath={onCopyFilePath}
           onReloadAgent={onReloadAgent}
           onRenameTab={onRenameTab}
+          renamingTab={renamingTab}
+          onRenameSubmit={onRenameSubmit}
+          onRenameCancel={onRenameCancel}
           onCloseTab={onCloseTab}
           onCloseTabsAbove={onCloseTabsAbove}
           onCloseTabsBelow={onCloseTabsBelow}
@@ -733,6 +782,9 @@ const MobileWorkspaceTabSwitcher = memo(function MobileWorkspaceTabSwitcher({
       onCopyFilePath,
       onReloadAgent,
       onRenameTab,
+      renamingTab,
+      onRenameSubmit,
+      onRenameCancel,
       onCloseTab,
       onCloseTabsAbove,
       onCloseTabsBelow,
@@ -740,30 +792,58 @@ const MobileWorkspaceTabSwitcher = memo(function MobileWorkspaceTabSwitcher({
     ],
   );
 
+  const renamingActiveTab = !isOpen && renamingTab?.tabKey === activeTab?.key ? renamingTab : null;
+
   return (
     <View style={styles.mobileTabsRow} testID="workspace-tabs-row">
-      <Pressable
-        ref={anchorRef}
-        testID="workspace-tab-switcher-trigger"
-        accessibilityRole="button"
-        accessibilityLabel={t("workspace.tabs.switcher.trigger", { count: tabs.length })}
-        style={switcherTriggerStyle}
-        onPress={handleOpenSwitcher}
-      >
-        {({ pressed }) => (
-          <>
-            <View style={styles.switcherTriggerLeft}>
-              <MobileActiveTabTrigger
-                activeTab={activeTab}
-                normalizedServerId={normalizedServerId}
-                normalizedWorkspaceId={normalizedWorkspaceId}
-                backdrop={pressed ? "surface1" : "surface0"}
-              />
-            </View>
-            <ThemedChevronDown size={14} uniProps={mutedColorMapping} />
-          </>
-        )}
-      </Pressable>
+      {renamingActiveTab ? (
+        <View ref={anchorRef} style={styles.switcherTrigger}>
+          <View style={styles.switcherTriggerLeft}>
+            <MobileActiveTabTrigger
+              activeTab={activeTab}
+              normalizedServerId={normalizedServerId}
+              normalizedWorkspaceId={normalizedWorkspaceId}
+              backdrop="surface0"
+              inlineRenameInput={
+                <InlineRenameInput
+                  key={renamingActiveTab.tabKey}
+                  initialValue={renamingActiveTab.currentTitle}
+                  maxLength={200}
+                  accessibilityLabel={t("workspace.tabs.menu.rename")}
+                  testID={`workspace-tab-rename-input-${renamingActiveTab.kind}-${renamingActiveTab.id}`}
+                  style={styles.switcherTriggerText}
+                  onSubmit={onRenameSubmit}
+                  onCancel={onRenameCancel}
+                />
+              }
+            />
+          </View>
+          <ThemedChevronDown size={14} uniProps={mutedColorMapping} />
+        </View>
+      ) : (
+        <Pressable
+          ref={anchorRef}
+          testID="workspace-tab-switcher-trigger"
+          accessibilityRole="button"
+          accessibilityLabel={t("workspace.tabs.switcher.trigger", { count: tabs.length })}
+          style={switcherTriggerStyle}
+          onPress={handleOpenSwitcher}
+        >
+          {({ pressed }) => (
+            <>
+              <View style={styles.switcherTriggerLeft}>
+                <MobileActiveTabTrigger
+                  activeTab={activeTab}
+                  normalizedServerId={normalizedServerId}
+                  normalizedWorkspaceId={normalizedWorkspaceId}
+                  backdrop={pressed ? "surface1" : "surface0"}
+                />
+              </View>
+              <ThemedChevronDown size={14} uniProps={mutedColorMapping} />
+            </>
+          )}
+        </Pressable>
+      )}
 
       <Combobox
         options={tabSwitcherOptions}
@@ -952,6 +1032,7 @@ function WorkspaceHeaderProjectRow({
 }
 
 interface WorkspaceHeaderTitleBarProps {
+  workspaceRename: WorkspaceRenameController;
   isLoading: boolean;
   title: string;
   subtitle: string;
@@ -981,6 +1062,7 @@ interface WorkspaceHeaderTitleBarProps {
 }
 
 function WorkspaceHeaderTitleBar({
+  workspaceRename,
   isLoading,
   title,
   subtitle,
@@ -1008,6 +1090,7 @@ function WorkspaceHeaderTitleBar({
   onViewScriptTerminal,
   onOpenUrlInBrowserTab,
 }: WorkspaceHeaderTitleBarProps) {
+  const { t } = useTranslation();
   return (
     <View style={styles.headerTitleContainer}>
       {isLoading ? (
@@ -1016,7 +1099,19 @@ function WorkspaceHeaderTitleBar({
         </View>
       ) : (
         <View style={styles.headerTitleTextGroup}>
-          <ScreenTitle testID="workspace-header-title">{title}</ScreenTitle>
+          {workspaceRename.isRenaming ? (
+            <InlineRenameInput
+              initialValue={workspaceRename.initialValue}
+              onSubmit={workspaceRename.submit}
+              onCancel={workspaceRename.cancel}
+              allowEmpty
+              style={styles.headerTitleInput}
+              accessibilityLabel={t("sidebar.workspace.rename.title")}
+              testID="workspace-header-rename-input"
+            />
+          ) : (
+            <ScreenTitle testID="workspace-header-title">{title}</ScreenTitle>
+          )}
           <WorkspaceHeaderProjectRow
             subtitle={subtitle}
             isSubtitleDistinct={isSubtitleDistinct}
@@ -1564,6 +1659,23 @@ function WorkspaceScreenContent({
     [workspaceId],
   );
   const workspaceDescriptor = useWorkspace(normalizedServerId, normalizedWorkspaceId);
+  const renamableWorkspace = useMemo(
+    () =>
+      isRouteFocused && workspaceDescriptor
+        ? {
+            serverId: normalizedServerId,
+            workspaceId: workspaceDescriptor.id,
+            name: workspaceDescriptor.name,
+            title: workspaceDescriptor.title,
+          }
+        : null,
+    [isRouteFocused, normalizedServerId, workspaceDescriptor],
+  );
+  const workspaceRename = useWorkspaceRename({
+    workspace: renamableWorkspace,
+    placement: "header",
+    sourceId: WORKSPACE_HEADER_RENAME_SOURCE_ID,
+  });
   useEffect(() => {
     if (!normalizedServerId || !normalizedWorkspaceId || workspaceDescriptor) return;
     void getHostRuntimeStore()
@@ -2313,7 +2425,7 @@ function WorkspaceScreenContent({
   });
 
   const [hoveredCloseTabKey, setHoveredCloseTabKey] = useState<string | null>(null);
-  const { handleRenameTab, renamingTab, handleRenameModalSubmit, handleRenameModalClose } =
+  const { handleRenameTab, renamingTab, handleRenameSubmit, handleRenameCancel } =
     useWorkspaceTabRename({
       client,
       normalizedServerId,
@@ -3864,8 +3976,10 @@ function WorkspaceScreenContent({
   );
 
   const showScreenHeader = useMemo(
-    () => shouldShowWorkspaceScreenHeader({ isFocusModeEnabled, isMobile }),
-    [isFocusModeEnabled, isMobile],
+    () =>
+      workspaceRename.isRenaming ||
+      shouldShowWorkspaceScreenHeader({ isFocusModeEnabled, isMobile }),
+    [isFocusModeEnabled, isMobile, workspaceRename.isRenaming],
   );
   const renderExplorerSidebarHeaderAction = useCallback(
     () => (
@@ -3925,6 +4039,7 @@ function WorkspaceScreenContent({
             <>
               <SidebarMenuToggle />
               <WorkspaceHeaderTitleBar
+                workspaceRename={workspaceRename}
                 isLoading={isWorkspaceHeaderLoading}
                 title={workspaceHeaderTitle}
                 subtitle={workspaceHeaderSubtitle}
@@ -3984,6 +4099,7 @@ function WorkspaceScreenContent({
       workspaceDirectory,
       workspaceHeaderSubtitle,
       workspaceHeaderTitle,
+      workspaceRename,
       isWorkspaceHeaderSubtitleDistinct,
       workspaceScripts,
     ],
@@ -4015,6 +4131,9 @@ function WorkspaceScreenContent({
         onCopyFilePath={handleCopyFilePath}
         onReloadAgent={handleReloadAgent}
         onRenameTab={handleRenameTab}
+        renamingTab={isRouteFocused ? renamingTab : null}
+        onRenameSubmit={handleRenameSubmit}
+        onRenameCancel={handleRenameCancel}
         onCloseTabsToLeft={handleCloseTabsToLeftInPane}
         onCloseTabsToRight={handleCloseTabsToRightInPane}
         onCloseOtherTabs={handleCloseOtherTabsInPane}
@@ -4051,6 +4170,9 @@ function WorkspaceScreenContent({
     handleCopyFilePath,
     handleReloadAgent,
     handleRenameTab,
+    renamingTab,
+    handleRenameSubmit,
+    handleRenameCancel,
     handleCloseTabsToLeftInPane,
     handleCloseTabsToRightInPane,
     handleCloseOtherTabsInPane,
@@ -4094,6 +4216,9 @@ function WorkspaceScreenContent({
           onCopyFilePath={handleCopyFilePath}
           onReloadAgent={handleReloadAgent}
           onRenameTab={handleRenameTab}
+          renamingTab={isRouteFocused ? renamingTab : null}
+          onRenameSubmit={handleRenameSubmit}
+          onRenameCancel={handleRenameCancel}
           onCloseTab={handleCloseTabById}
           onCloseTabsAbove={handleCloseTabsToLeft}
           onCloseTabsBelow={handleCloseTabsToRight}
@@ -4118,6 +4243,9 @@ function WorkspaceScreenContent({
             onCopyFilePath={handleCopyFilePath}
             onReloadAgent={handleReloadAgent}
             onRenameTab={handleRenameTab}
+            renamingTab={isRouteFocused ? renamingTab : null}
+            onRenameSubmit={handleRenameSubmit}
+            onRenameCancel={handleRenameCancel}
             onCloseTabsToLeft={handleCloseTabsToLeft}
             onCloseTabsToRight={handleCloseTabsToRight}
             onCloseOtherTabs={handleCloseOtherTabs}
@@ -4157,11 +4285,6 @@ function WorkspaceScreenContent({
           onClose={closeImportSheet}
           onImportedAgent={handleImportedAgent}
           onImported={navigateToImportedAgent}
-        />
-        <WorkspaceTabRenameModal
-          renamingTab={isRouteFocused ? renamingTab : null}
-          onSubmit={handleRenameModalSubmit}
-          onClose={handleRenameModalClose}
         />
       </View>
     </RenderProfile>
@@ -4252,6 +4375,14 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.foregroundExtraMuted,
     fontSize: theme.fontSize.sm,
     flexShrink: 0,
+  },
+  headerTitleInput: {
+    fontSize: theme.fontSize.base,
+    fontWeight: {
+      xs: "400",
+      md: "300",
+    },
+    color: theme.colors.foreground,
   },
   headerTitleSkeleton: {
     width: 220,

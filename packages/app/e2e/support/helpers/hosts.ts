@@ -168,10 +168,10 @@ export async function leaveHostAppearanceSettings(page: Page): Promise<void> {
 
 export async function renameHostFromSettings(page: Page, name: string): Promise<void> {
   await page.getByTestId("host-page-label-edit-button").click();
-  const input = page.getByTestId("host-page-rename-modal-input");
+  const input = page.getByTestId("host-page-name-input");
   await expect(input).toBeVisible();
   await input.fill(name);
-  await page.getByTestId("host-page-rename-modal-submit").click();
+  await input.press("Enter");
   await expect(input).toHaveCount(0);
 }
 

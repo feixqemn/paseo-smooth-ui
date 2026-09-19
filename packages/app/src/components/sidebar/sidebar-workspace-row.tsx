@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState, type Ref } from "react";
+import { memo, useCallback, useId, useMemo, useState, type Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { View, Text, type GestureResponderEvent } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
@@ -7,7 +7,7 @@ import type { SidebarWorkspaceEntry } from "@/hooks/use-sidebar-workspaces-list"
 import type { SidebarSurfaceBackdrop } from "@/styles/surface-backdrop";
 import type { DraggableListDragHandleProps } from "@/components/draggable-list.types";
 import type { ShortcutKey } from "@/utils/format-shortcut";
-import { WorkspaceRenameModal } from "@/components/workspace-rename-modal";
+import { useWorkspaceRename, type WorkspaceRenameController } from "@/hooks/use-workspace-rename";
 import { useWorkspaceClipboardActions } from "@/hooks/use-workspace-clipboard-actions";
 import { useToast } from "@/contexts/toast-context";
 import { toWorktreeArchiveRisk } from "@/git/worktree-archive-warning";
@@ -75,7 +75,8 @@ export function SidebarWorkspaceRow({
   const { t } = useTranslation();
   const toast = useToast();
   const [isHidingWorkspace, setIsHidingWorkspace] = useState(false);
-  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const renameSourceId = useId();
+  const rename = useWorkspaceRename({ workspace, placement: "sidebar", sourceId: renameSourceId });
   const isArchiving = workspace.archivingAt !== null || isHidingWorkspace;
 
   const redirectAfterArchive = useCallback(() => {
@@ -114,14 +115,6 @@ export function SidebarWorkspaceRow({
     clipboard.copyBranchName(workspace);
   }, [clipboard, workspace]);
 
-  const handleOpenRename = useCallback(() => {
-    setIsRenameOpen(true);
-  }, []);
-
-  const handleCloseRename = useCallback(() => {
-    setIsRenameOpen(false);
-  }, []);
-
   const archiveShortcutKeys = useShortcutKeys("archive-workspace");
   const { hasClearableAttention, canMarkUnread, clearAttention, markUnread } =
     useWorkspaceReadState({
@@ -142,7 +135,7 @@ export function SidebarWorkspaceRow({
   useKeyboardActionHandler({
     handlerId: `workspace-archive-${workspace.workspaceKey}`,
     actions: ["workspace.archive"],
-    enabled: selected && !isArchiving,
+    enabled: selected && !isArchiving && !rename.isRenaming,
     priority: 0,
     handle: () => {
       handleArchive();
@@ -151,42 +144,36 @@ export function SidebarWorkspaceRow({
   });
 
   return (
-    <>
-      <WorkspaceRowBody
-        workspace={workspace}
-        selected={selected}
-        shortcutNumber={shortcutNumber}
-        showShortcutBadge={showShortcutBadge}
-        hostBadge={hostBadge}
-        isCreating={isCreating}
-        isArchiving={isArchiving}
-        onPress={onPress}
-        drag={drag}
-        isDragging={isDragging}
-        dragHandleProps={dragHandleProps}
-        archiveLabel={t("sidebar.workspace.actions.archive")}
-        archiveStatus={isArchiving ? "pending" : "idle"}
-        archivePendingLabel={t("sidebar.workspace.actions.archiving")}
-        onArchive={handleArchive}
-        onCopyBranchName={canCopyBranchName ? handleCopyBranchName : undefined}
-        onCopyPath={handleCopyPath}
-        onRename={handleOpenRename}
-        onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
-        onMarkAsUnread={canMarkUnread ? handleMarkAsUnread : undefined}
-        archiveShortcutKeys={selected ? archiveShortcutKeys : null}
-      />
-      <WorkspaceRenameModal
-        visible={isRenameOpen}
-        workspace={workspace}
-        onClose={handleCloseRename}
-        testID={`sidebar-workspace-rename-modal-${workspace.workspaceKey}`}
-      />
-    </>
+    <WorkspaceRowBody
+      workspace={workspace}
+      selected={selected}
+      shortcutNumber={shortcutNumber}
+      showShortcutBadge={showShortcutBadge}
+      hostBadge={hostBadge}
+      isCreating={isCreating}
+      isArchiving={isArchiving}
+      onPress={onPress}
+      drag={drag}
+      isDragging={isDragging}
+      dragHandleProps={dragHandleProps}
+      archiveLabel={t("sidebar.workspace.actions.archive")}
+      archiveStatus={isArchiving ? "pending" : "idle"}
+      archivePendingLabel={t("sidebar.workspace.actions.archiving")}
+      onArchive={handleArchive}
+      onCopyBranchName={canCopyBranchName ? handleCopyBranchName : undefined}
+      onCopyPath={handleCopyPath}
+      onRename={rename.open}
+      rename={rename}
+      onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
+      onMarkAsUnread={canMarkUnread ? handleMarkAsUnread : undefined}
+      archiveShortcutKeys={selected ? archiveShortcutKeys : null}
+    />
   );
 }
 
 interface WorkspaceRowBodyProps {
   workspace: SidebarWorkspaceEntry;
+  rename: WorkspaceRenameController;
   selected: boolean;
   shortcutNumber: number | null;
   showShortcutBadge: boolean;
@@ -211,6 +198,7 @@ interface WorkspaceRowBodyProps {
 
 function WorkspaceRowBody({
   workspace,
+  rename,
   selected,
   shortcutNumber,
   showShortcutBadge,
@@ -236,7 +224,7 @@ function WorkspaceRowBody({
   const isTouchPlatform = platformIsNative || isCompact;
   const [isPressed, setIsPressed] = useState(false);
   const trailing = useSidebarWorkspaceTrailing();
-  const draggable = Boolean(drag);
+  const draggable = Boolean(drag) && !rename.isRenaming;
   const interaction = useLongPressDragInteraction({
     drag: drag ?? noop,
     menuController: null,
@@ -249,18 +237,20 @@ function WorkspaceRowBody({
   } = dragHandleProps?.attributes ?? {};
 
   const handlePress = useCallback(() => {
+    if (rename.isRenaming) return;
     if (interaction.didLongPressRef.current) {
       interaction.didLongPressRef.current = false;
       return;
     }
     onPress();
-  }, [interaction.didLongPressRef, onPress]);
+  }, [interaction.didLongPressRef, onPress, rename.isRenaming]);
   const handleWorkspacePressIn = useCallback(
     (event: GestureResponderEvent) => {
+      if (rename.isRenaming) return;
       setIsPressed(true);
       if (draggable) interaction.handlePressIn(event);
     },
-    [draggable, interaction],
+    [draggable, interaction, rename.isRenaming],
   );
   const handleWorkspacePressOut = useCallback(() => {
     setIsPressed(false);
@@ -270,7 +260,11 @@ function WorkspaceRowBody({
   const accessibilityState = useMemo(() => ({ selected }), [selected]);
 
   return (
-    <SidebarWorkspaceRowFrame workspace={workspace} isDragging={isDragging}>
+    <SidebarWorkspaceRowFrame
+      workspace={workspace}
+      isDragging={isDragging}
+      isRenaming={rename.isRenaming}
+    >
       {({ isHovered, contextMenuOpen, onContextMenuOpenChange, hoverHandlers }) => {
         const isDesktop = !isTouchPlatform;
         const serviceSummary = isDesktop ? selectWorkspaceServiceSummary(workspace.scripts) : null;
@@ -323,6 +317,7 @@ function WorkspaceRowBody({
             >
               <SidebarWorkspaceRowContent
                 workspace={workspace}
+                rename={rename}
                 hostBadge={hostBadge}
                 serviceSummary={serviceSummary}
                 backdrop={backdrop}

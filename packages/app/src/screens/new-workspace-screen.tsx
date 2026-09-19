@@ -20,10 +20,13 @@ import {
 import { HostStatusDot } from "@/components/host-status-dot";
 import { HostPicker } from "@/components/hosts/host-picker";
 import { ProjectIconView } from "@/components/project-icon-view";
-import { AdaptiveRenameModal } from "@/components/rename-modal";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
 import type { ComboboxOption as ComboboxOptionType, ComboboxProps } from "@/components/ui/combobox";
 import { ComboboxTrigger } from "@/components/ui/combobox-trigger";
+import {
+  EditingTextInput as TextInput,
+  type EditingTextInputHandle,
+} from "@/components/ui/text-input";
 import { Shortcut } from "@/components/ui/shortcut";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TitlebarDragRegion } from "@/components/desktop/titlebar-drag-region";
@@ -1646,7 +1649,6 @@ export function NewWorkspaceScreen({
   const supportsForgeSearch = useHostFeature(selectedServerId, "forgeSearch");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [workspaceTitle, setWorkspaceTitle] = useState("");
-  const [renameTitleOpen, setRenameTitleOpen] = useState(false);
   const [createdWorkspace, setCreatedWorkspace] = useState<ReturnType<
     typeof normalizeWorkspaceDescriptor
   > | null>(null);
@@ -1661,6 +1663,8 @@ export function NewWorkspaceScreen({
   const projectPickerAnchorRef = useRef<View>(null);
   const isolationPickerAnchorRef = useRef<View>(null);
   const hostPickerAnchorRef = useRef<View | null>(null);
+  const titleInputRef = useRef<EditingTextInputHandle>(null);
+  const titleBeforeEditRef = useRef("");
   const isDraftHandoffActive = useIsNewWorkspaceDraftHandoffActive({ draftId, selectedServerId });
   const isStillOnCreateScreen = useNewWorkspaceScreenPresence();
 
@@ -2389,15 +2393,38 @@ export function NewWorkspaceScreen({
         <TitlebarDragRegion />
         <KeyboardTranslateView style={animatedStaticStyles.centered}>
           <View style={styles.composerTitleContainer}>
-            <Pressable
-              onPress={() => setRenameTitleOpen(true)}
-              disabled={isPending}
-              accessibilityRole="button"
+            <TextInput
+              ref={titleInputRef}
+              initialValue={workspaceTitle}
+              onChangeText={setWorkspaceTitle}
+              onFocus={() => {
+                titleBeforeEditRef.current = titleInputRef.current?.getText() ?? workspaceTitle;
+              }}
+              onBlur={() => {
+                const trimmed = titleInputRef.current?.getText().trim() ?? "";
+                titleInputRef.current?.replaceText(trimmed);
+                setWorkspaceTitle(trimmed);
+              }}
+              onSubmitEditing={() => titleInputRef.current?.blur()}
+              onKeyPress={(event) => {
+                if (event.nativeEvent.key !== "Escape") return;
+                event.preventDefault();
+                event.stopPropagation();
+                const restored = titleBeforeEditRef.current;
+                titleInputRef.current?.replaceText(restored);
+                setWorkspaceTitle(restored);
+                titleInputRef.current?.blur();
+              }}
+              editable={!isPending}
               accessibilityLabel={t("sidebar.workspace.rename.title")}
+              placeholder={t("newWorkspace.title")}
+              placeholderTextColor={theme.colors.foreground}
+              selectTextOnFocus
+              autoCorrect={false}
+              autoCapitalize="none"
+              style={styles.composerTitle}
               testID="new-workspace-rename"
-            >
-              <Text style={styles.composerTitle}>{workspaceTitle || t("newWorkspace.title")}</Text>
-            </Pressable>
+            />
           </View>
           {formStack}
           {isTerminalLaunch ? (
@@ -2463,16 +2490,6 @@ export function NewWorkspaceScreen({
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         </KeyboardTranslateView>
       </View>
-      <AdaptiveRenameModal
-        visible={renameTitleOpen}
-        title={t("sidebar.workspace.rename.title")}
-        initialValue={workspaceTitle}
-        placeholder={t("newWorkspace.title")}
-        submitLabel={t("sidebar.workspace.rename.submit")}
-        onClose={() => setRenameTitleOpen(false)}
-        onSubmit={(value) => setWorkspaceTitle(value.trim())}
-        testID="new-workspace-rename-modal"
-      />
     </FileDropZone>
   );
 }
@@ -2508,9 +2525,14 @@ const styles = StyleSheet.create((theme) => ({
     paddingRight: theme.spacing[4],
   },
   composerTitle: {
+    width: "100%",
     fontSize: theme.fontSize["2xl"],
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.foreground,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    padding: 0,
+    outlineWidth: 0,
   },
   errorText: {
     fontSize: theme.fontSize.base,

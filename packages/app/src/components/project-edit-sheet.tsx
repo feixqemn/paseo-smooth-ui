@@ -36,7 +36,7 @@ export interface ProjectEditSheetProps {
   snapshot: ProjectEditFormSnapshot;
 }
 
-/** Editing a project is its name and its icon, decided together and saved once. */
+/** Project names are edited inline; this sheet edits only the icon. */
 export function ProjectEditSheet({
   visible,
   onClose,
@@ -89,7 +89,7 @@ export function ProjectEditSheet({
     void chooseImage();
   }, [chooseImage]);
 
-  const header = useMemo<SheetHeader>(() => ({ title: t("settings.project.edit.title") }), [t]);
+  const header = useMemo<SheetHeader>(() => ({ title: t("settings.project.edit.icon") }), [t]);
 
   const footer = useMemo(
     () => (
@@ -131,23 +131,6 @@ export function ProjectEditSheet({
       sizeContentToCurrentSnapPoint
       testID="project-edit-sheet"
     >
-      <Field
-        label={t("settings.project.edit.name")}
-        error={state.error?.scope === "name" ? state.error.message : null}
-      >
-        <FormTextInput
-          size={size}
-          testID="project-edit-name"
-          accessibilityLabel={t("settings.project.edit.nameLabel")}
-          initialValue={state.name}
-          onChangeText={form.setName}
-          placeholder={snapshot.projectName}
-          editable={!isSaving}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-      </Field>
-
       {supportsCustomIcon ? (
         <Field
           label={t("settings.project.edit.icon")}
@@ -226,23 +209,15 @@ async function step<T>(scope: ProjectEditFormError["scope"], run: () => Promise<
   }
 }
 
-/**
- * One submit, up to two RPCs. Icon bytes are acquired before either RPC runs
- * because that is the step most likely to fail; past that point both RPCs take
- * the same inputs on a retry, so a failure between them is safe to submit again.
- */
 async function submitProjectEdit(input: {
   client: DaemonClient;
   projectId: string;
   submission: ProjectEditSubmission;
 }): Promise<void> {
   const { client, projectId, submission } = input;
-  const { rename, icon } = submission;
+  const { icon } = submission;
 
   const source = icon ? await step("icon", () => acquireIconSource(icon)) : null;
-  if (rename) {
-    await step("name", () => client.renameProject(projectId, rename.customName));
-  }
   if (source) {
     await step("icon", () => client.setProjectIcon(projectId, source));
   }
@@ -257,7 +232,7 @@ function toFormError(error: unknown): ProjectEditFormError {
   if (error instanceof ProjectEditStepError) {
     return { scope: error.scope, message: error.message };
   }
-  return { scope: "name", message: toErrorMessage(error) };
+  return { scope: "icon", message: toErrorMessage(error) };
 }
 
 const styles = StyleSheet.create((theme) => ({
