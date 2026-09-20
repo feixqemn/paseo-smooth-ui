@@ -170,6 +170,11 @@ the active track. It does not automatically migrate the private patches into the
 
 ## Later edits and merges
 
+Keep source and deployment changes as Git commits pushed to the corresponding GitHub repository.
+Do not create local build, deployment, app, daemon-home or client-layout backup copies. Restore an
+earlier version by checking out its source commit from GitHub and rebuilding with the existing bundle
+ID and fixed signing identity. Never commit credentials, private keys, passwords or session data.
+
 Use the release tag/source commit and official base above to compare the exact shipped changes.
 The release includes the source patch and this record; private releases additionally retain the
 full runtime source/override records. Compare overlapping upstream implementations at the source
