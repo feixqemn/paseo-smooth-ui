@@ -6,6 +6,8 @@ are frozen at the original review date, not a claim about today's upstream state
 ## 2026-09-19 — workspace and agent naming (source update)
 
 - Click the new-workspace heading to edit its name directly in place.
+  It stays normal text until clicked; an empty name shows a muted placeholder
+  while editing and the normal heading color otherwise.
   The name travels through `createWorkspace.title`; chat, terminal and empty workspaces
   use the same creation path. Older daemons use the existing workspace rename request.
 - Newly created interactive agents with an initial prompt get a concise topic title in

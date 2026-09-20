@@ -1649,6 +1649,7 @@ export function NewWorkspaceScreen({
   const supportsForgeSearch = useHostFeature(selectedServerId, "forgeSearch");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [workspaceTitle, setWorkspaceTitle] = useState("");
+  const [isEditingWorkspaceTitle, setIsEditingWorkspaceTitle] = useState(false);
   const [createdWorkspace, setCreatedWorkspace] = useState<ReturnType<
     typeof normalizeWorkspaceDescriptor
   > | null>(null);
@@ -2393,38 +2394,54 @@ export function NewWorkspaceScreen({
         <TitlebarDragRegion />
         <KeyboardTranslateView style={animatedStaticStyles.centered}>
           <View style={styles.composerTitleContainer}>
-            <TextInput
-              ref={titleInputRef}
-              initialValue={workspaceTitle}
-              onChangeText={setWorkspaceTitle}
-              onFocus={() => {
-                titleBeforeEditRef.current = titleInputRef.current?.getText() ?? workspaceTitle;
-              }}
-              onBlur={() => {
-                const trimmed = titleInputRef.current?.getText().trim() ?? "";
-                titleInputRef.current?.replaceText(trimmed);
-                setWorkspaceTitle(trimmed);
-              }}
-              onSubmitEditing={() => titleInputRef.current?.blur()}
-              onKeyPress={(event) => {
-                if (event.nativeEvent.key !== "Escape") return;
-                event.preventDefault();
-                event.stopPropagation();
-                const restored = titleBeforeEditRef.current;
-                titleInputRef.current?.replaceText(restored);
-                setWorkspaceTitle(restored);
-                titleInputRef.current?.blur();
-              }}
-              editable={!isPending}
-              accessibilityLabel={t("sidebar.workspace.rename.title")}
-              placeholder={t("newWorkspace.title")}
-              placeholderTextColor={theme.colors.foreground}
-              selectTextOnFocus
-              autoCorrect={false}
-              autoCapitalize="none"
-              style={styles.composerTitle}
-              testID="new-workspace-rename"
-            />
+            {isEditingWorkspaceTitle ? (
+              <TextInput
+                ref={titleInputRef}
+                initialValue={workspaceTitle}
+                onChangeText={setWorkspaceTitle}
+                onFocus={() => {
+                  titleBeforeEditRef.current = titleInputRef.current?.getText() ?? workspaceTitle;
+                }}
+                onBlur={() => {
+                  const trimmed = titleInputRef.current?.getText().trim() ?? "";
+                  titleInputRef.current?.replaceText(trimmed);
+                  setWorkspaceTitle(trimmed);
+                  setIsEditingWorkspaceTitle(false);
+                }}
+                onSubmitEditing={() => titleInputRef.current?.blur()}
+                onKeyPress={(event) => {
+                  if (event.nativeEvent.key !== "Escape") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const restored = titleBeforeEditRef.current;
+                  titleInputRef.current?.replaceText(restored);
+                  setWorkspaceTitle(restored);
+                  titleInputRef.current?.blur();
+                }}
+                editable={!isPending}
+                accessibilityLabel={t("sidebar.workspace.rename.title")}
+                placeholder={t("newWorkspace.title")}
+                placeholderTextColor={theme.colors.foregroundMuted}
+                autoFocus
+                selectTextOnFocus
+                autoCorrect={false}
+                autoCapitalize="none"
+                style={styles.composerTitle}
+                testID="new-workspace-rename"
+              />
+            ) : (
+              <Pressable
+                onPress={() => setIsEditingWorkspaceTitle(true)}
+                disabled={isPending}
+                accessibilityRole="button"
+                accessibilityLabel={t("sidebar.workspace.rename.title")}
+                testID="new-workspace-rename"
+              >
+                <Text style={styles.composerTitle} numberOfLines={1}>
+                  {workspaceTitle || t("newWorkspace.title")}
+                </Text>
+              </Pressable>
+            )}
           </View>
           {formStack}
           {isTerminalLaunch ? (
