@@ -77,7 +77,7 @@ its existing tool-group sheet; the animated inline disclosure is for desktop/web
 
 ### UI history and superseded choices
 
-- 2026-09-22 scroll follow-up: expanding a long user message extends downwards. Show less subtracts the hidden height from the viewport offset before collapsing, keeping the shortened ending at the reading position. Disclosure clicks stop following output; visible virtualized rows no longer shift the viewport when expanded.
+- 2026-09-22 scroll follow-up: expanding a long user message extends downwards. On Show less, scrolling follows the actual height of the same 140ms CSS transition to keep the ending at the reading position, replacing the initial one-shot jump. No separate scroll animation or per-frame React updates; reduced motion affects both. Disclosure clicks stop following output; visible virtualized rows no longer shift the viewport when expanded.
 - 2026-09-22 source update: restrict length-based folding to user messages and fade their preview ending; assistant replies no longer fold after completion.
 - `smooth.20260912.3` / `custom.20260912.4`: singleton activity rows bypass the group wrapper, retaining the original row and its own tool details. Existing grouping IDs and live/history projection are unchanged.
 

@@ -415,7 +415,6 @@ const userMessageStylesheet = StyleSheet.create((theme) => ({
 const MESSAGE_PREVIEW_HEIGHT = 480;
 const messagePreviewStyles = StyleSheet.create((theme) => ({
   bounds: { minWidth: 0, maxWidth: "100%", overflow: "hidden" },
-  clipped: { maxHeight: MESSAGE_PREVIEW_HEIGHT },
   fade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 48 },
   toggle: { alignSelf: "flex-start", paddingVertical: theme.spacing[2] },
   toggleText: { color: theme.colors.foregroundMuted, fontSize: theme.fontSize.base },
@@ -439,21 +438,58 @@ function UserMessagePreviewFadeSvg({ color }: { color: string }) {
 const ThemedUserMessagePreviewFadeSvg = withUnistyles(UserMessagePreviewFadeSvg);
 const userMessagePreviewFadeColorMapping = (theme: Theme) => ({ color: theme.colors.surface3 });
 
+// Keep the contents mounted so both directions animate their actual height.
+function AnimatedContentHeight({
+  children,
+  collapsedHeight,
+}: {
+  children: ReactNode;
+  collapsedHeight?: number;
+}) {
+  const reducedMotion = useReducedMotion();
+  const webStyle = useMemo(
+    () =>
+      ({
+        minWidth: 0,
+        maxWidth: "100%",
+        overflow: "hidden",
+        height: collapsedHeight ?? "auto",
+        interpolateSize: "allow-keywords",
+        transition: reducedMotion ? "none" : "height 140ms cubic-bezier(0.2, 0, 0, 1)",
+      }) as React.CSSProperties,
+    [collapsedHeight, reducedMotion],
+  );
+  if (isWeb) {
+    return <div style={webStyle}>{children}</div>;
+  }
+  return (
+    <View style={[messagePreviewStyles.bounds, { maxHeight: collapsedHeight }]}>{children}</View>
+  );
+}
+
 function CollapsibleUserMessageContent({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [isLong, setIsLong] = useState(false);
   const previewRef = useRef<View>(null);
+  const collapseObserverRef = useRef<ResizeObserver | null>(null);
+  useEffect(() => () => collapseObserverRef.current?.disconnect(), []);
   const toggle = useCallback(() => {
+    collapseObserverRef.current?.disconnect();
     if (expanded && isWeb) {
       const preview = previewRef.current as unknown as HTMLElement | null;
       const viewport = preview?.closest<HTMLElement>('[data-testid="agent-chat-scroll"]');
       if (preview && viewport) {
-        // Return to the shortened message before it can leave the virtualized viewport.
-        viewport.scrollTop -= Math.max(
-          0,
-          preview.getBoundingClientRect().height - MESSAGE_PREVIEW_HEIGHT,
-        );
+        const initialHeight = preview.getBoundingClientRect().height;
+        const initialScrollTop = viewport.scrollTop;
+        // The height transition drives scrolling too; no separate scroll animation.
+        const observer = new ResizeObserver(([entry]) => {
+          const height = entry.contentRect.height;
+          viewport.scrollTop = initialScrollTop + height - initialHeight;
+          if (height <= MESSAGE_PREVIEW_HEIGHT) observer.disconnect();
+        });
+        collapseObserverRef.current = observer;
+        observer.observe(preview);
       }
     }
     setExpanded((value) => !value);
@@ -464,11 +500,12 @@ function CollapsibleUserMessageContent({ children }: { children: ReactNode }) {
   }, []);
   return (
     <View style={messagePreviewStyles.bounds}>
-      <View
-        ref={previewRef}
-        style={[messagePreviewStyles.bounds, !expanded && messagePreviewStyles.clipped]}
-      >
-        <View onLayout={measure}>{children}</View>
+      <View ref={previewRef} style={messagePreviewStyles.bounds}>
+        <AnimatedContentHeight
+          collapsedHeight={isLong && !expanded ? MESSAGE_PREVIEW_HEIGHT : undefined}
+        >
+          <View onLayout={measure}>{children}</View>
+        </AnimatedContentHeight>
         {isLong && !expanded ? (
           <View pointerEvents="none" aria-hidden style={messagePreviewStyles.fade}>
             <ThemedUserMessagePreviewFadeSvg uniProps={userMessagePreviewFadeColorMapping} />
