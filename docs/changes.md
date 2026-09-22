@@ -66,7 +66,7 @@ that they ship in the public binary.
 | Disclosure animation | Existing ExpandableBadge uses 220ms height transition, fade and chevron rotation; closing retains content until transition ends. | `components/message.tsx` |
 | Loading animation | Activity/tool labels sweep a gradient while running; expanded streaming reasoning uses the same subtle visual treatment. Reduced motion is respected. | `components/message.tsx`, overview loading state |
 | Sent Markdown | User messages render Markdown after submission. Input and copy retain source; reasoning uses the assistant renderer and file links. | `components/message.tsx` |
-| Long Markdown | Chat surfaces constrain intrinsic width; wide content scrolls inside the renderer. Messages over 480px collapse with Show more / Show less; active assistant output and thinking stay visible. Full source/copy stays unchanged. | `components/message.tsx`, `components/markdown/renderer.tsx` |
+| Long Markdown | Chat surfaces constrain intrinsic width; wide content scrolls inside the renderer. Only user messages over 480px collapse, with a faded ending and … Show more / Show less. Assistant replies stay fully expanded. Full source/copy stays unchanged. | `components/message.tsx`, `components/markdown/renderer.tsx` |
 | Chinese emphasis | Strong markers next to CJK punctuation, including Chinese curly quotes and horizontal space before a closing marker, use normal delimiter balancing. Code and escaped markers remain literal. | `utils/markdown-parser.ts` |
 | Preferences cleanup | New profiles use Overview. Removed the obsolete auto-expand reasoning setting from the UI; retained its stored field for existing profiles. | settings Appearance, storage |
 | Terminal plumbing | File link events carry modifier values through native/web terminal bridges into the shared resolver. | terminal runtime, webview, generated terminal HTML |
@@ -77,6 +77,7 @@ its existing tool-group sheet; the animated inline disclosure is for desktop/web
 
 ### UI history and superseded choices
 
+- 2026-09-22 source update: restrict length-based folding to user messages and fade their preview ending; assistant replies no longer fold after completion.
 - `smooth.20260912.3` / `custom.20260912.4`: singleton activity rows bypass the group wrapper, retaining the original row and its own tool details. Existing grouping IDs and live/history projection are unchanged.
 
 - `4e55493`: initial file gestures, sent Markdown and inline reasoning.

@@ -416,17 +416,30 @@ const MESSAGE_PREVIEW_HEIGHT = 480;
 const messagePreviewStyles = StyleSheet.create((theme) => ({
   bounds: { minWidth: 0, maxWidth: "100%", overflow: "hidden" },
   clipped: { maxHeight: MESSAGE_PREVIEW_HEIGHT },
+  fade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 48 },
   toggle: { alignSelf: "flex-start", paddingVertical: theme.spacing[2] },
   toggleText: { color: theme.colors.foregroundMuted, fontSize: theme.fontSize.base },
 }));
 
-function CollapsibleMessageContent({
-  children,
-  enabled = true,
-}: {
-  children: ReactNode;
-  enabled?: boolean;
-}) {
+function UserMessagePreviewFadeSvg({ color }: { color: string }) {
+  const gradientId = `user-message-preview-${React.useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  return (
+    <Svg width="100%" height="100%" preserveAspectRatio="none">
+      <Defs>
+        <SvgLinearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <Stop offset="0%" stopColor={color} stopOpacity={0} />
+          <Stop offset="100%" stopColor={color} stopOpacity={1} />
+        </SvgLinearGradient>
+      </Defs>
+      <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${gradientId})`} />
+    </Svg>
+  );
+}
+
+const ThemedUserMessagePreviewFadeSvg = withUnistyles(UserMessagePreviewFadeSvg);
+const userMessagePreviewFadeColorMapping = (theme: Theme) => ({ color: theme.colors.surface3 });
+
+function CollapsibleUserMessageContent({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [isLong, setIsLong] = useState(false);
@@ -437,12 +450,15 @@ function CollapsibleMessageContent({
   }, []);
   return (
     <View style={messagePreviewStyles.bounds}>
-      <View
-        style={[messagePreviewStyles.bounds, enabled && !expanded && messagePreviewStyles.clipped]}
-      >
+      <View style={[messagePreviewStyles.bounds, !expanded && messagePreviewStyles.clipped]}>
         <View onLayout={measure}>{children}</View>
+        {isLong && !expanded ? (
+          <View pointerEvents="none" aria-hidden style={messagePreviewStyles.fade}>
+            <ThemedUserMessagePreviewFadeSvg uniProps={userMessagePreviewFadeColorMapping} />
+          </View>
+        ) : null}
       </View>
-      {enabled && isLong ? (
+      {isLong ? (
         <Pressable
           onPress={toggle}
           accessibilityRole="button"
@@ -450,6 +466,7 @@ function CollapsibleMessageContent({
           style={messagePreviewStyles.toggle}
         >
           <Text style={messagePreviewStyles.toggleText}>
+            {!expanded ? "… " : null}
             {t(expanded ? "common.actions.showLess" : "common.actions.showMore")}
           </Text>
         </Pressable>
@@ -594,14 +611,14 @@ export const UserMessage = memo(function UserMessage({
             </View>
           ) : null}
           {hasText ? (
-            <CollapsibleMessageContent>
+            <CollapsibleUserMessageContent>
               <MarkdownRenderer
                 text={message}
                 compact
                 enableHtmlish={false}
                 allowedImageHandlers={MARKDOWN_ALLOWED_IMAGE_HANDLERS}
               />
-            </CollapsibleMessageContent>
+            </CollapsibleUserMessageContent>
           ) : null}
         </View>
         {hasText ? (
@@ -2110,12 +2127,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       ) : null}
     </View>
   );
-  if (variant !== "reasoning")
-    return (
-      <CollapsibleMessageContent enabled={phase === "complete"}>
-        {content}
-      </CollapsibleMessageContent>
-    );
+  if (variant !== "reasoning") return content;
   return (
     <View
       style={[
