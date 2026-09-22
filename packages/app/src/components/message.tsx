@@ -443,14 +443,31 @@ function CollapsibleUserMessageContent({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [isLong, setIsLong] = useState(false);
-  const toggle = useCallback(() => setExpanded((value) => !value), []);
+  const previewRef = useRef<View>(null);
+  const toggle = useCallback(() => {
+    if (expanded && isWeb) {
+      const preview = previewRef.current as unknown as HTMLElement | null;
+      const viewport = preview?.closest<HTMLElement>('[data-testid="agent-chat-scroll"]');
+      if (preview && viewport) {
+        // Return to the shortened message before it can leave the virtualized viewport.
+        viewport.scrollTop -= Math.max(
+          0,
+          preview.getBoundingClientRect().height - MESSAGE_PREVIEW_HEIGHT,
+        );
+      }
+    }
+    setExpanded((value) => !value);
+  }, [expanded]);
   const accessibilityState = useMemo(() => ({ expanded }), [expanded]);
   const measure = useCallback((event: LayoutChangeEvent) => {
     setIsLong(event.nativeEvent.layout.height > MESSAGE_PREVIEW_HEIGHT);
   }, []);
   return (
     <View style={messagePreviewStyles.bounds}>
-      <View style={[messagePreviewStyles.bounds, !expanded && messagePreviewStyles.clipped]}>
+      <View
+        ref={previewRef}
+        style={[messagePreviewStyles.bounds, !expanded && messagePreviewStyles.clipped]}
+      >
         <View onLayout={measure}>{children}</View>
         {isLong && !expanded ? (
           <View pointerEvents="none" aria-hidden style={messagePreviewStyles.fade}>

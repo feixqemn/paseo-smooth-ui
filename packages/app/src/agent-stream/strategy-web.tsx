@@ -387,6 +387,8 @@ function WebStreamViewport(props: StreamRenderInput & { isMobileBreakpoint: bool
     rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = (item, _delta, instance) => {
       const viewportHeight = instance.scrollRect?.height ?? 0;
       const scrollOffset = instance.scrollOffset ?? 0;
+      // Disclosures in a visible row grow downwards without moving the reader.
+      if (item.end > scrollOffset) return false;
       const remainingDistance = instance.getTotalSize() - (scrollOffset + viewportHeight);
       return shouldAdjustScrollForVirtualRowResize({
         isHistoryStartPrependActive: historyStartPrependAnchorActiveRef.current,
@@ -984,6 +986,11 @@ function WebStreamViewport(props: StreamRenderInput & { isMobileBreakpoint: bool
         markUpwardViewportInput();
       }
     };
+    const handleDisclosureClick = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest("[aria-expanded]")) {
+        stopFollowingOutputFromUserIntent();
+      }
+    };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isUpwardViewportScrollKey(event)) {
         return;
@@ -1072,6 +1079,7 @@ function WebStreamViewport(props: StreamRenderInput & { isMobileBreakpoint: bool
       lastTouchClientYRef.current = null;
     };
 
+    scrollContainer.addEventListener("click", handleDisclosureClick, true);
     scrollContainer.addEventListener("scroll", handleDomScroll, { passive: true });
     scrollContainer.addEventListener("wheel", handleWheel, { passive: true });
     scrollContainer.addEventListener("keydown", handleKeyDown, { passive: true });
@@ -1086,6 +1094,7 @@ function WebStreamViewport(props: StreamRenderInput & { isMobileBreakpoint: bool
     scrollContainer.addEventListener("touchcancel", handleTouchEnd, { passive: true });
 
     return () => {
+      scrollContainer.removeEventListener("click", handleDisclosureClick, true);
       scrollContainer.removeEventListener("scroll", handleDomScroll);
       scrollContainer.removeEventListener("wheel", handleWheel);
       scrollContainer.removeEventListener("keydown", handleKeyDown);
