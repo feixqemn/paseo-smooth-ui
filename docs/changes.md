@@ -3,6 +3,24 @@
 This records shipped behavior and the source locations needed for later changes. PR states below
 are frozen at the original review date, not a claim about today's upstream state.
 
+## 2026-09-22 — resolve file references without guessing between duplicates
+
+Paseo used a workspace-wide suffix search with `limit: 1` for bare filenames,
+then cached the selected path indefinitely. With several `request.md` files,
+the first sorted result could be an old file unrelated to the model's actual write.
+The provider message and tool path were not changed; the UI invented the target.
+
+The existing resolver now requests two candidates and opens an inferred path only
+when it is unique. Multiple matches show a full-path hint instead of opening the
+first file; an exact workspace-relative path with a directory still takes precedence.
+Hover and click refresh the lookup, preserving in-flight deduplication and workspace
+switch checks. Failed refreshes also clear the old tooltip target. Explicit links,
+line references and the existing file-opening actions keep their normal behavior.
+
+Source owners: `packages/app/src/assistant-file-links/resolver.ts`,
+`use-file-link.ts` and the existing localized error strings. Public and private
+sources carry the same fix; no Pi/provider change or new installer is needed.
+
 ## 2026-09-19 — workspace and agent naming (source update)
 
 - Click the new-workspace heading to edit its name directly in place.

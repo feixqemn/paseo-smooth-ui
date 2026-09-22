@@ -15,6 +15,7 @@ import {
   type AssistantFileLinkResolverContextValue,
 } from "./provider";
 import {
+  AmbiguousFileLinkError,
   classifyForResolution,
   fetchDaemonResolution,
   type AssistantFileLinkResolution,
@@ -87,7 +88,7 @@ export function useFileLink(source: AssistantFileLinkSource): UseFileLinkResult 
     },
     enabled: false,
     retry: 0,
-    staleTime: Infinity,
+    staleTime: 0,
   });
 
   const open = useStableEvent(
@@ -118,7 +119,7 @@ export function useFileLink(source: AssistantFileLinkSource): UseFileLinkResult 
           getDirectorySuggestions: context.getDirectorySuggestions,
         }),
       retry: 0,
-      staleTime: Infinity,
+      staleTime: 0,
     });
   });
 
@@ -139,8 +140,8 @@ export function useFileLink(source: AssistantFileLinkSource): UseFileLinkResult 
     if (resolution.kind === "resolved") {
       return resolution.value.kind === "file" ? resolution.value.target : null;
     }
-    return query.data ?? null;
-  }, [query.data, resolution]);
+    return query.error ? null : (query.data ?? null);
+  }, [query.data, query.error, resolution]);
 
   return useMemo(() => ({ target, onHoverIn, onPress, open }), [target, onHoverIn, onPress, open]);
 }
@@ -210,7 +211,7 @@ function openAssistantFileLink(input: {
             getDirectorySuggestions: input.context.getDirectorySuggestions,
           }),
         retry: 0,
-        staleTime: Infinity,
+        staleTime: 0,
       });
       await dispatchFileTarget({
         target,
@@ -345,10 +346,13 @@ async function dispatchUnresolvedError(input: {
   ) {
     return;
   }
-  current.toast?.show(input.noFileFoundMessage, {
-    variant: "error",
-    testID: "assistant-file-link-not-found-toast",
-  });
+  current.toast?.show(
+    input.error instanceof AmbiguousFileLinkError ? input.error.message : input.noFileFoundMessage,
+    {
+      variant: "error",
+      testID: "assistant-file-link-not-found-toast",
+    },
+  );
 }
 
 const ACTION_LINK_SOURCE: AssistantFileLinkSource = {

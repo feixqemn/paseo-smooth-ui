@@ -67,6 +67,13 @@ export class UnresolvedFileLinkError extends Error {
   }
 }
 
+export class AmbiguousFileLinkError extends Error {
+  constructor(readonly token: string) {
+    super(i18n.t("common.errors.ambiguousFile", { token }));
+    this.name = "AmbiguousFileLinkError";
+  }
+}
+
 export async function fetchDaemonResolution({
   ambiguousQuery,
   token,
@@ -87,21 +94,43 @@ export async function fetchDaemonResolution({
       includeFiles: true,
       includeDirectories: false,
       matchMode: "suffix",
-      limit: 1,
+      limit: 2,
     });
   } catch {
     throw new UnresolvedFileLinkError(token);
   }
 
-  const match = suggestions.entries.find((entry) => entry.kind === "file");
-  if (!match || suggestions.error) {
+  const matches = suggestions.entries.filter((entry) => entry.kind === "file");
+  if (matches.length === 0 || suggestions.error) {
     throw new UnresolvedFileLinkError(token);
+  }
+
+  const match =
+    matches.length === 1
+      ? matches[0]
+      : hasDirectory(ambiguousQuery)
+        ? matches.find((entry) => isExactWorkspaceRelativePath(entry.path, ambiguousQuery))
+        : undefined;
+  if (!match) {
+    throw new AmbiguousFileLinkError(token);
   }
 
   return {
     ...target,
     path: joinWorkspacePath(trimmedRoot, match.path),
   };
+}
+
+function hasDirectory(path: string): boolean {
+  return normalizeRelativePath(path).includes("/");
+}
+
+function isExactWorkspaceRelativePath(path: string, query: string): boolean {
+  return normalizeRelativePath(path) === normalizeRelativePath(query);
+}
+
+function normalizeRelativePath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+$/, "");
 }
 
 export function classifyForResolution(

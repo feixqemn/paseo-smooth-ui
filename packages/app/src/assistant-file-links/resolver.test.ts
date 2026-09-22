@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AmbiguousFileLinkError,
   classifyForResolution,
   fetchDaemonResolution,
   getAssistantFileLinkToken,
@@ -191,7 +192,7 @@ describe("fetchDaemonResolution", () => {
         query: "file.ts",
         cwd: "/Users/test/project",
         matchMode: "suffix",
-        limit: 1,
+        limit: 2,
       },
     ]);
     expect(result).toEqual({
@@ -200,6 +201,54 @@ describe("fetchDaemonResolution", () => {
       lineStart: 12,
       lineEnd: undefined,
     });
+  });
+
+  it("rejects multiple basename matches instead of opening the first result", async () => {
+    const { getDirectorySuggestions } = suggestionsFromMap({
+      "file.ts": [
+        { path: "file.ts", kind: "file" },
+        { path: "packages/app/src/file.ts", kind: "file" },
+      ],
+    });
+
+    await expect(
+      fetchDaemonResolution({
+        ambiguousQuery: "file.ts",
+        token: "file.ts",
+        target: {
+          raw: "file.ts",
+          path: "/Users/test/project/file.ts",
+          lineStart: undefined,
+          lineEnd: undefined,
+        },
+        workspaceRoot: "/Users/test/project",
+        getDirectorySuggestions,
+      }),
+    ).rejects.toEqual(new AmbiguousFileLinkError("file.ts"));
+  });
+
+  it("honors an exact workspace-relative path among suffix matches", async () => {
+    const { getDirectorySuggestions } = suggestionsFromMap({
+      "src/file.ts": [
+        { path: "src/file.ts", kind: "file" },
+        { path: "packages/app/src/file.ts", kind: "file" },
+      ],
+    });
+
+    await expect(
+      fetchDaemonResolution({
+        ambiguousQuery: "src/file.ts",
+        token: "src/file.ts",
+        target: {
+          raw: "src/file.ts",
+          path: "/Users/test/project/src/file.ts",
+          lineStart: undefined,
+          lineEnd: undefined,
+        },
+        workspaceRoot: "/Users/test/project",
+        getDirectorySuggestions,
+      }),
+    ).resolves.toMatchObject({ path: "/Users/test/project/src/file.ts" });
   });
 
   it("throws a typed unresolved error when the daemon finds no match", async () => {

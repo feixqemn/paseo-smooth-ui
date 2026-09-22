@@ -58,7 +58,7 @@ interface TestClient {
 function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
-      queries: { retry: false },
+      queries: { retry: false, staleTime: Infinity },
       mutations: { retry: false },
     },
   });
@@ -212,6 +212,48 @@ describe("useFileLink", () => {
     expect(getDirectorySuggestions).toHaveBeenCalledTimes(2);
   });
 
+  it("does not open a cached file when a later lookup becomes ambiguous", async () => {
+    const getDirectorySuggestions = vi
+      .fn()
+      .mockResolvedValueOnce(resolvedSuggestions([{ path: "docs/dumm.md", kind: "file" }]))
+      .mockResolvedValueOnce(
+        resolvedSuggestions([
+          { path: "docs/dumm.md", kind: "file" },
+          { path: "archive/dumm.md", kind: "file" },
+        ]),
+      );
+    const openedFiles: OpenedFile[] = [];
+    const toast = createToast();
+    const { result } = renderHook(() => useFileLink(SOURCE), {
+      wrapper: createWrapper({
+        client: { getDirectorySuggestions },
+        openedFiles,
+        toast,
+      }),
+    });
+
+    act(() => {
+      result.current.onPress();
+    });
+    await waitFor(() => expect(openedFiles).toHaveLength(1));
+
+    act(() => {
+      result.current.onPress();
+    });
+    await waitFor(() => {
+      expect(toast.show).toHaveBeenCalledWith(
+        "Multiple files match dumm.md; please use the full path",
+        {
+          variant: "error",
+          testID: "assistant-file-link-not-found-toast",
+        },
+      );
+      expect(result.current.target).toBeNull();
+    });
+    expect(openedFiles).toHaveLength(1);
+    expect(getDirectorySuggestions).toHaveBeenCalledTimes(2);
+  });
+
   it("dedupes two links pointing at the same source", async () => {
     const deferred = createDeferred<DirectorySuggestionResult>();
     const getDirectorySuggestions = vi.fn(() => deferred.promise);
@@ -243,7 +285,7 @@ describe("useFileLink", () => {
     });
   });
 
-  it("hover then click uses the prefetched result", async () => {
+  it("hover then click refreshes the prefetched result", async () => {
     const getDirectorySuggestions = vi.fn(async () =>
       resolvedSuggestions([{ path: "docs/dumm.md", kind: "file" }]),
     );
@@ -268,7 +310,7 @@ describe("useFileLink", () => {
     await waitFor(() => {
       expect(openedFiles).toHaveLength(1);
     });
-    expect(getDirectorySuggestions).toHaveBeenCalledTimes(1);
+    expect(getDirectorySuggestions).toHaveBeenCalledTimes(2);
   });
 
   it("does not open a stale result after the workspace changes", async () => {
